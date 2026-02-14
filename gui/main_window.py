@@ -3,7 +3,7 @@ gui/main_window.py
 
 Beschrijving: Hoofdvenster met wizard interface
 Applicatie: Project Generator
-Versie: 1.0.4
+Versie: 1.0.5
 Auteur: Barremans
 """
 
@@ -12,7 +12,7 @@ from PyQt6.QtWidgets import (
     QPushButton, QLabel, QLineEdit, QTextEdit,
     QFileDialog, QCheckBox, QMessageBox, QProgressBar,
     QStackedWidget, QGroupBox, QFormLayout, QMenuBar,
-    QDialog
+    QDialog, QComboBox
 )
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QFont, QKeySequence, QShortcut, QAction, QIcon
@@ -25,6 +25,7 @@ from core.default_templates import create_standard_project_template
 from core.generator import ProjectGenerator
 from utils.settings import AppSettings
 from gui.settings_dialog import SettingsDialog
+from i18n import get_translator, t
 
 
 class GeneratorThread(QThread):
@@ -44,21 +45,21 @@ class GeneratorThread(QThread):
         try:
             generator = ProjectGenerator(self.context, self.template)
             
-            self.progress.emit("Project wordt aangemaakt...")
+            self.progress.emit(t("wizard.step5.generating"))
             
             success = generator.generate()
             
             project_path = str(self.context.project_root)
             
             if success:
-                msg = f"Project succesvol aangemaakt!"
+                msg = t("wizard.step6.title")
                 self.finished.emit(True, msg, project_path)
             else:
-                msg = f"Project aangemaakt met waarschuwingen."
+                msg = t("wizard.step6.title")
                 self.finished.emit(True, msg, project_path)
                 
         except Exception as e:
-            self.finished.emit(False, f"Fout tijdens generatie:\n{str(e)}", "")
+            self.finished.emit(False, f"Error: {str(e)}", "")
 
 
 class ProjectGeneratorWindow(QMainWindow):
@@ -68,21 +69,20 @@ class ProjectGeneratorWindow(QMainWindow):
     
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Python Project Generator v1.0.3")
-        self.setMinimumSize(700, 600)
-        
-        # Set window icon
-        icon_path = self._get_icon_path("app_icon.png")
-        if icon_path.exists():
-            self.setWindowIcon(QIcon(str(icon_path)))
         
         # Settings
         self.settings = AppSettings()
+        
+        # Setup translator
+        self.translator = get_translator(self.settings.locale)
         
         # Data
         self.project_location = None
         self.app_name = ""
         self.generated_project_path = None
+        
+        # Setup window
+        self._setup_window()
         
         # Setup Menu
         self._setup_menu()
@@ -96,6 +96,16 @@ class ProjectGeneratorWindow(QMainWindow):
         # Load defaults
         self._load_default_values()
     
+    def _setup_window(self):
+        """Setup window properties."""
+        self.setWindowTitle(t("app.title"))
+        self.setMinimumSize(700, 600)
+        
+        # Set window icon
+        icon_path = self._get_icon_path("app_icon.png")
+        if icon_path.exists():
+            self.setWindowIcon(QIcon(str(icon_path)))
+    
     def _get_icon_path(self, icon_name: str) -> Path:
         """Haal icon pad op."""
         icons_dir = Path(__file__).parent.parent / "assets" / "icons"
@@ -106,44 +116,111 @@ class ProjectGeneratorWindow(QMainWindow):
         menubar = self.menuBar()
         
         # File menu
-        file_menu = menubar.addMenu("&Bestand")
+        file_menu = menubar.addMenu(t("menu.file"))
         
-        new_action = QAction(QIcon(str(self._get_icon_path("file.png"))), "&Nieuw Project", self)
+        new_action = QAction(QIcon(str(self._get_icon_path("file.png"))), t("menu.file.new"), self)
         new_action.setShortcut(QKeySequence("Ctrl+N"))
         new_action.triggered.connect(self._new_project)
         file_menu.addAction(new_action)
         
         file_menu.addSeparator()
         
-        settings_action = QAction(QIcon(str(self._get_icon_path("settings.png"))), "&Instellingen", self)
+        settings_action = QAction(QIcon(str(self._get_icon_path("settings.png"))), t("menu.file.settings"), self)
         settings_action.setShortcut(QKeySequence("Ctrl+,"))
         settings_action.triggered.connect(self._show_settings)
         file_menu.addAction(settings_action)
         
         file_menu.addSeparator()
         
-        exit_action = QAction("&Afsluiten", self)
+        exit_action = QAction(t("menu.file.exit"), self)
         exit_action.setShortcut(QKeySequence("Ctrl+Q"))
         exit_action.triggered.connect(self.close)
         file_menu.addAction(exit_action)
         
-        # Help menu
-        help_menu = menubar.addMenu("&Help")
+        # Language menu
+        lang_menu = menubar.addMenu(t("menu.language"))
         
-        help_action = QAction(QIcon(str(self._get_icon_path("help.png"))), "&Help", self)
+        nl_action = QAction("🇳🇱 Nederlands", self)
+        nl_action.triggered.connect(lambda: self._change_language("nl_NL"))
+        lang_menu.addAction(nl_action)
+        
+        en_action = QAction("🇬🇧 English", self)
+        en_action.triggered.connect(lambda: self._change_language("en_US"))
+        lang_menu.addAction(en_action)
+        
+        # Help menu
+        help_menu = menubar.addMenu(t("menu.help"))
+        
+        help_action = QAction(QIcon(str(self._get_icon_path("help.png"))), t("menu.help.help"), self)
         help_action.setShortcut(QKeySequence("F1"))
         help_action.triggered.connect(self._show_help)
         help_menu.addAction(help_action)
         
-        changelog_action = QAction(QIcon(str(self._get_icon_path("info.png"))), "&Changelog", self)
+        changelog_action = QAction(QIcon(str(self._get_icon_path("info.png"))), t("menu.help.changelog"), self)
         changelog_action.triggered.connect(self._show_changelog)
         help_menu.addAction(changelog_action)
         
         help_menu.addSeparator()
         
-        about_action = QAction(QIcon(str(self._get_icon_path("info.png"))), "&Over", self)
+        about_action = QAction(QIcon(str(self._get_icon_path("info.png"))), t("menu.help.about"), self)
         about_action.triggered.connect(self._show_about)
         help_menu.addAction(about_action)
+        
+    def _rebuild_menu(self):
+        """Herbouw menu bar na taalwisseling."""
+        # Clear existing menu
+        self.menuBar().clear()
+        
+        # File menu
+        file_menu = self.menuBar().addMenu(t("menu.file"))
+        
+        new_action = QAction(QIcon(str(self._get_icon_path("file.png"))), t("menu.file.new"), self)
+        new_action.setShortcut(QKeySequence("Ctrl+N"))
+        new_action.triggered.connect(self._new_project)
+        file_menu.addAction(new_action)
+        
+        file_menu.addSeparator()
+        
+        settings_action = QAction(QIcon(str(self._get_icon_path("settings.png"))), t("menu.file.settings"), self)
+        settings_action.setShortcut(QKeySequence("Ctrl+,"))
+        settings_action.triggered.connect(self._show_settings)
+        file_menu.addAction(settings_action)
+        
+        file_menu.addSeparator()
+        
+        exit_action = QAction(t("menu.file.exit"), self)
+        exit_action.setShortcut(QKeySequence("Ctrl+Q"))
+        exit_action.triggered.connect(self.close)
+        file_menu.addAction(exit_action)
+        
+        # Language menu
+        lang_menu = self.menuBar().addMenu(t("menu.language"))
+        
+        nl_action = QAction("🇳🇱 Nederlands", self)
+        nl_action.triggered.connect(lambda: self._change_language("nl_NL"))
+        lang_menu.addAction(nl_action)
+        
+        en_action = QAction("🇬🇧 English", self)
+        en_action.triggered.connect(lambda: self._change_language("en_US"))
+        lang_menu.addAction(en_action)
+        
+        # Help menu
+        help_menu = self.menuBar().addMenu(t("menu.help"))
+        
+        help_action = QAction(QIcon(str(self._get_icon_path("help.png"))), t("menu.help.help"), self)
+        help_action.setShortcut(QKeySequence("F1"))
+        help_action.triggered.connect(self._show_help)
+        help_menu.addAction(help_action)
+        
+        changelog_action = QAction(QIcon(str(self._get_icon_path("info.png"))), t("menu.help.changelog"), self)
+        changelog_action.triggered.connect(self._show_changelog)
+        help_menu.addAction(changelog_action)
+        
+        help_menu.addSeparator()
+        
+        about_action = QAction(QIcon(str(self._get_icon_path("info.png"))), t("menu.help.about"), self)
+        about_action.triggered.connect(self._show_about)
+        help_menu.addAction(about_action)    
         
     def _setup_ui(self):
         """Bouw de UI op."""
@@ -156,18 +233,18 @@ class ProjectGeneratorWindow(QMainWindow):
         layout.setContentsMargins(20, 20, 20, 20)
         
         # Title
-        title = QLabel("Python Project Generator")
+        self.lbl_title = QLabel(t("app.title"))
         title_font = QFont()
         title_font.setPointSize(18)
         title_font.setBold(True)
-        title.setFont(title_font)
-        title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(title)
+        self.lbl_title.setFont(title_font)
+        self.lbl_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(self.lbl_title)
         
-        subtitle = QLabel("Genereer automatisch een complete Python projectstructuur")
-        subtitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        subtitle.setStyleSheet("color: #666; margin-bottom: 20px;")
-        layout.addWidget(subtitle)
+        self.lbl_subtitle = QLabel(t("app.subtitle"))
+        self.lbl_subtitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.lbl_subtitle.setStyleSheet("color: #666; margin-bottom: 20px;")
+        layout.addWidget(self.lbl_subtitle)
         
         # Stacked widget voor verschillende schermen
         self.stack = QStackedWidget()
@@ -184,14 +261,14 @@ class ProjectGeneratorWindow(QMainWindow):
         # Navigation buttons
         nav_layout = QHBoxLayout()
         
-        self.btn_back = QPushButton("← Vorige")
+        self.btn_back = QPushButton(t("button.previous"))
         self.btn_back.clicked.connect(self._go_back)
         self.btn_back.setEnabled(False)
         
         nav_layout.addWidget(self.btn_back)
         nav_layout.addStretch()
         
-        self.btn_next = QPushButton("Volgende →")
+        self.btn_next = QPushButton(t("button.next"))
         self.btn_next.clicked.connect(self._go_next)
         
         nav_layout.addWidget(self.btn_next)
@@ -231,44 +308,45 @@ class ProjectGeneratorWindow(QMainWindow):
         page = QWidget()
         layout = QVBoxLayout(page)
         
-        group = QGroupBox("Stap 1: Projectlocatie")
+        self.group_location = QGroupBox(t("wizard.step1.title"))
         group_layout = QVBoxLayout()
         
-        label = QLabel("Waar wil je het project aanmaken?")
-        group_layout.addWidget(label)
+        self.lbl_location = QLabel(t("wizard.step1.location"))
+        group_layout.addWidget(self.lbl_location)
         
         # Location selector
         loc_layout = QHBoxLayout()
         
         self.txt_location = QLineEdit()
-        self.txt_location.setPlaceholderText("Selecteer een map...")
+        self.txt_location.setPlaceholderText(t("wizard.step1.placeholder"))
         self.txt_location.setReadOnly(True)
         
-        btn_browse = QPushButton("Bladeren...")
-        btn_browse.clicked.connect(self._browse_location)
+        self.btn_browse = QPushButton(t("wizard.step1.browse"))
+        self.btn_browse.clicked.connect(self._browse_location)
         
         loc_layout.addWidget(self.txt_location)
-        loc_layout.addWidget(btn_browse)
+        loc_layout.addWidget(self.btn_browse)
         
         group_layout.addLayout(loc_layout)
         
         # App name
-        group_layout.addWidget(QLabel("\nApplicatienaam:"))
+        self.lbl_appname = QLabel(f"\n{t('wizard.step1.appname')}")
+        group_layout.addWidget(self.lbl_appname)
         
         self.txt_appname = QLineEdit()
-        self.txt_appname.setPlaceholderText("Bijv: MyAwesomeApp")
+        self.txt_appname.setPlaceholderText(t("wizard.step1.appname_placeholder"))
         self.txt_appname.textChanged.connect(self._validate_location_page)
         
         group_layout.addWidget(self.txt_appname)
         
         # Info
-        info = QLabel("💡 De applicatienaam wordt gebruikt als mapnaam en in alle bestanden.")
-        info.setStyleSheet("color: #666; font-style: italic; margin-top: 10px;")
-        info.setWordWrap(True)
-        group_layout.addWidget(info)
+        self.lbl_location_info = QLabel(t("wizard.step1.info"))
+        self.lbl_location_info.setStyleSheet("color: #666; font-style: italic; margin-top: 10px;")
+        self.lbl_location_info.setWordWrap(True)
+        group_layout.addWidget(self.lbl_location_info)
         
-        group.setLayout(group_layout)
-        layout.addWidget(group)
+        self.group_location.setLayout(group_layout)
+        layout.addWidget(self.group_location)
         layout.addStretch()
         
         return page
@@ -278,25 +356,25 @@ class ProjectGeneratorWindow(QMainWindow):
         page = QWidget()
         layout = QVBoxLayout(page)
         
-        group = QGroupBox("Stap 2: Project Informatie")
+        self.group_metadata = QGroupBox(t("wizard.step2.title"))
         form = QFormLayout()
         
         self.txt_author = QLineEdit()
-        self.txt_author.setPlaceholderText("Jouw naam")
+        self.txt_author.setPlaceholderText(t("wizard.step2.author_placeholder"))
         
         self.txt_version = QLineEdit()
         self.txt_version.setText("1.0.0")
         
         self.txt_description = QTextEdit()
-        self.txt_description.setPlaceholderText("Optionele beschrijving van het project...")
+        self.txt_description.setPlaceholderText(t("wizard.step2.description_placeholder"))
         self.txt_description.setMaximumHeight(100)
         
-        form.addRow("Auteur:", self.txt_author)
-        form.addRow("Versie:", self.txt_version)
-        form.addRow("Beschrijving:", self.txt_description)
+        form.addRow(f"{t('wizard.step2.author')}:", self.txt_author)
+        form.addRow(f"{t('wizard.step2.version')}:", self.txt_version)
+        form.addRow(f"{t('wizard.step2.description')}:", self.txt_description)
         
-        group.setLayout(form)
-        layout.addWidget(group)
+        self.group_metadata.setLayout(form)
+        layout.addWidget(self.group_metadata)
         layout.addStretch()
         
         return page
@@ -306,24 +384,24 @@ class ProjectGeneratorWindow(QMainWindow):
         page = QWidget()
         layout = QVBoxLayout(page)
         
-        group = QGroupBox("Stap 3: Opties")
+        self.group_options = QGroupBox(t("wizard.step3.title"))
         group_layout = QVBoxLayout()
         
-        self.chk_venv = QCheckBox("Virtuele omgeving (venv) aanmaken")
+        self.chk_venv = QCheckBox(t("wizard.step3.venv"))
         self.chk_venv.setChecked(True)
         
-        venv_info = QLabel("Maakt automatisch een venv aan en installeert pip.")
-        venv_info.setStyleSheet("color: #666; margin-left: 25px; font-size: 10pt;")
-        venv_info.setWordWrap(True)
+        self.lbl_venv_info = QLabel(t("wizard.step3.venv_info"))
+        self.lbl_venv_info.setStyleSheet("color: #666; margin-left: 25px; font-size: 10pt;")
+        self.lbl_venv_info.setWordWrap(True)
         
         group_layout.addWidget(self.chk_venv)
-        group_layout.addWidget(venv_info)
+        group_layout.addWidget(self.lbl_venv_info)
         group_layout.addSpacing(10)
         
         # Info over structuur
-        info_label = QLabel("ℹ️  Standaard projectstructuur:")
-        info_label.setStyleSheet("font-weight: bold; margin-top: 10px;")
-        group_layout.addWidget(info_label)
+        self.lbl_structure_title = QLabel(t("wizard.step3.structure_title"))
+        self.lbl_structure_title.setStyleSheet("font-weight: bold; margin-top: 10px;")
+        group_layout.addWidget(self.lbl_structure_title)
         
         structure = QLabel(
             "• .vscode/ (VS Code configuratie)\n"
@@ -334,6 +412,7 @@ class ProjectGeneratorWindow(QMainWindow):
             "• data/ (Data opslag)\n"
             "• docs/ (Documentatie)\n"
             "• helpers/ (Helper functies)\n"
+            "• i18n/ (Internationalization)\n"
             "• utils/ (Utilities)\n"
             "• md/ (Markdown bestanden)\n"
             "• tests/ (Unit tests)\n"
@@ -343,8 +422,8 @@ class ProjectGeneratorWindow(QMainWindow):
         structure.setStyleSheet("color: #333; margin-left: 20px;")
         group_layout.addWidget(structure)
         
-        group.setLayout(group_layout)
-        layout.addWidget(group)
+        self.group_options.setLayout(group_layout)
+        layout.addWidget(self.group_options)
         layout.addStretch()
         
         return page
@@ -354,12 +433,12 @@ class ProjectGeneratorWindow(QMainWindow):
         page = QWidget()
         layout = QVBoxLayout(page)
         
-        group = QGroupBox("Stap 4: Samenvatting")
+        self.group_summary = QGroupBox(t("wizard.step4.title"))
         group_layout = QVBoxLayout()
         
-        label = QLabel("Controleer de instellingen:")
-        label.setStyleSheet("font-weight: bold;")
-        group_layout.addWidget(label)
+        self.lbl_summary_check = QLabel(t("wizard.step4.check"))
+        self.lbl_summary_check.setStyleSheet("font-weight: bold;")
+        group_layout.addWidget(self.lbl_summary_check)
         
         self.lbl_summary = QLabel()
         self.lbl_summary.setWordWrap(True)
@@ -367,8 +446,8 @@ class ProjectGeneratorWindow(QMainWindow):
         
         group_layout.addWidget(self.lbl_summary)
         
-        group.setLayout(group_layout)
-        layout.addWidget(group)
+        self.group_summary.setLayout(group_layout)
+        layout.addWidget(self.group_summary)
         layout.addStretch()
         
         return page
@@ -378,20 +457,20 @@ class ProjectGeneratorWindow(QMainWindow):
         page = QWidget()
         layout = QVBoxLayout(page)
         
-        group = QGroupBox("Project wordt aangemaakt...")
+        self.group_progress = QGroupBox(t("wizard.step5.title"))
         group_layout = QVBoxLayout()
         
         self.progress_bar = QProgressBar()
         self.progress_bar.setRange(0, 0)
         
-        self.lbl_progress = QLabel("Bezig met genereren...")
+        self.lbl_progress = QLabel(t("wizard.step5.generating"))
         self.lbl_progress.setAlignment(Qt.AlignmentFlag.AlignCenter)
         
         group_layout.addWidget(self.progress_bar)
         group_layout.addWidget(self.lbl_progress)
         
-        group.setLayout(group_layout)
-        layout.addWidget(group)
+        self.group_progress.setLayout(group_layout)
+        layout.addWidget(self.group_progress)
         layout.addStretch()
         
         return page
@@ -401,7 +480,7 @@ class ProjectGeneratorWindow(QMainWindow):
         page = QWidget()
         layout = QVBoxLayout(page)
         
-        group = QGroupBox("✅ Project succesvol aangemaakt!")
+        self.group_result = QGroupBox(t("wizard.step6.title"))
         group_layout = QVBoxLayout()
         
         self.lbl_result = QLabel()
@@ -413,7 +492,7 @@ class ProjectGeneratorWindow(QMainWindow):
         # Action buttons
         btn_layout = QHBoxLayout()
         
-        self.btn_open_folder = QPushButton("📁 Open Projectmap")
+        self.btn_open_folder = QPushButton(t("button.open_folder"))
         self.btn_open_folder.clicked.connect(self._open_project_folder)
         self.btn_open_folder.setStyleSheet("""
             QPushButton {
@@ -428,7 +507,7 @@ class ProjectGeneratorWindow(QMainWindow):
             }
         """)
         
-        self.btn_open_editor = QPushButton("💻 Open in Editor")
+        self.btn_open_editor = QPushButton(t("button.open_editor"))
         self.btn_open_editor.clicked.connect(self._open_in_editor)
         self.btn_open_editor.setStyleSheet("""
             QPushButton {
@@ -443,7 +522,7 @@ class ProjectGeneratorWindow(QMainWindow):
             }
         """)
         
-        self.btn_new_project = QPushButton("🆕 Nieuw Project")
+        self.btn_new_project = QPushButton(t("button.new_project"))
         self.btn_new_project.clicked.connect(self._new_project)
         self.btn_new_project.setStyleSheet("""
             QPushButton {
@@ -458,7 +537,7 @@ class ProjectGeneratorWindow(QMainWindow):
             }
         """)
         
-        self.btn_close = QPushButton("❌ Sluiten")
+        self.btn_close = QPushButton(t("button.close"))
         self.btn_close.clicked.connect(self.close)
         self.btn_close.setStyleSheet("""
             QPushButton {
@@ -480,8 +559,8 @@ class ProjectGeneratorWindow(QMainWindow):
         
         group_layout.addLayout(btn_layout)
         
-        group.setLayout(group_layout)
-        layout.addWidget(group)
+        self.group_result.setLayout(group_layout)
+        layout.addWidget(self.group_result)
         layout.addStretch()
         
         return page
@@ -492,7 +571,7 @@ class ProjectGeneratorWindow(QMainWindow):
         
         folder = QFileDialog.getExistingDirectory(
             self,
-            "Selecteer projectlocatie",
+            t("wizard.step1.location"),
             start_dir
         )
         
@@ -543,41 +622,44 @@ class ProjectGeneratorWindow(QMainWindow):
         self.btn_back.setEnabled(current > 0 and current < 4)
         
         if current == 3:
-            self.btn_next.setText("🚀 Genereer Project")
+            self.btn_next.setText(t("button.generate"))
             self.btn_next.setEnabled(True)
         elif current >= 4:
             self.btn_next.setVisible(False)
             self.btn_back.setVisible(False)
         else:
-            self.btn_next.setText("Volgende →")
+            self.btn_next.setText(t("button.next"))
             self.btn_next.setEnabled(True)
             self.btn_next.setVisible(True)
             self.btn_back.setVisible(True)
     
     def _update_summary(self):
         """Update samenvatting tekst."""
+        venv_text = t("wizard.step4.venv_yes") if self.chk_venv.isChecked() else t("wizard.step4.venv_no")
+        desc = self.txt_description.toPlainText() or '<i>Geen</i>'
+        
         summary_text = f"""
-<b>Projectlocatie:</b><br>
+<b>{t('wizard.step4.location')}:</b><br>
 {self.project_location / self.app_name}<br><br>
 
-<b>Applicatienaam:</b> {self.app_name}<br>
-<b>Auteur:</b> {self.txt_author.text()}<br>
-<b>Versie:</b> {self.txt_version.text()}<br>
-<b>Beschrijving:</b> {self.txt_description.toPlainText() or '<i>Geen</i>'}<br><br>
+<b>{t('wizard.step4.appname')}:</b> {self.app_name}<br>
+<b>{t('wizard.step4.author')}:</b> {self.txt_author.text()}<br>
+<b>{t('wizard.step4.version')}:</b> {self.txt_version.text()}<br>
+<b>{t('wizard.step4.description')}:</b> {desc}<br><br>
 
-<b>Opties:</b><br>
-- Virtuele omgeving: {'Ja' if self.chk_venv.isChecked() else 'Nee'}<br><br>
+<b>{t('wizard.step4.options')}:</b><br>
+- {t('wizard.step4.venv_option')} {venv_text}<br><br>
 
-<b>Er worden aangemaakt:</b><br>
-- 10+ mappen (inclusief submappen)<br>
-- 15+ bestanden (met correcte headers)<br>
-- export_to_usb.bat script<br>
-- PyInstaller .spec bestand<br>
-- VS Code configuratie<br>
+<b>{t('wizard.step4.will_create')}:</b><br>
+- {t('wizard.step4.folders')}<br>
+- {t('wizard.step4.files')}<br>
+- {t('wizard.step4.export_script')}<br>
+- {t('wizard.step4.spec_file')}<br>
+- {t('wizard.step4.vscode_config')}<br>
 """
         
         if self.chk_venv.isChecked():
-            summary_text += "• Virtuele Python omgeving<br>"
+            summary_text += f"• {t('wizard.step4.venv_env')}<br>"
         
         self.lbl_summary.setText(summary_text)
     
@@ -622,14 +704,14 @@ class ProjectGeneratorWindow(QMainWindow):
         if success:
             result_text = f"""
 <p style='font-size: 12pt;'><b>{message}</b></p>
-<p><b>Locatie:</b><br><code>{project_path}</code></p>
-<p style='color: #666;'>Gebruik de knoppen hieronder om het project te openen of een nieuw project te starten.</p>
+<p><b>{t('wizard.step6.location')}</b><br><code>{project_path}</code></p>
+<p style='color: #666;'>{t('wizard.step6.info')}</p>
 """
             self.lbl_result.setText(result_text)
             self.stack.setCurrentIndex(5)
             self._update_navigation()
         else:
-            QMessageBox.critical(self, "Fout", message)
+            QMessageBox.critical(self, "Error", message)
     
     def _open_project_folder(self):
         """Open de projectmap in Windows Verkenner."""
@@ -646,9 +728,8 @@ class ProjectGeneratorWindow(QMainWindow):
             except FileNotFoundError:
                 QMessageBox.warning(
                     self,
-                    "Editor niet gevonden",
-                    f"Editor '{editor_path}' is niet gevonden.\n\n"
-                    f"Configureer het juiste pad via Menu → Bestand → Instellingen"
+                    t("error.editor_not_found"),
+                    t("error.editor_not_found_message", editor=editor_path)
                 )
     
     def _new_project(self):
@@ -676,6 +757,72 @@ class ProjectGeneratorWindow(QMainWindow):
         self.btn_back.setVisible(True)
         self._update_navigation()
     
+    def _change_language(self, locale: str):
+        """Verander taal en herlaad UI."""
+        self.translator.set_locale(locale)
+        self.settings.locale = locale
+        self.settings.save()
+        
+        # Herlaad UI teksten
+        self._refresh_ui()
+    
+    def _refresh_ui(self):
+        """Herlaad alle UI teksten na taal wijziging."""
+        # Window title
+        self.setWindowTitle(t("app.title"))
+        
+        # Main labels
+        self.lbl_title.setText(t("app.title"))
+        self.lbl_subtitle.setText(t("app.subtitle"))
+        
+        # Page 1
+        self.group_location.setTitle(t("wizard.step1.title"))
+        self.lbl_location.setText(t("wizard.step1.location"))
+        self.btn_browse.setText(t("wizard.step1.browse"))
+        self.lbl_appname.setText(f"\n{t('wizard.step1.appname')}")
+        self.txt_location.setPlaceholderText(t("wizard.step1.placeholder"))
+        self.txt_appname.setPlaceholderText(t("wizard.step1.appname_placeholder"))
+        self.lbl_location_info.setText(t("wizard.step1.info"))
+        
+        # Page 2
+        self.group_metadata.setTitle(t("wizard.step2.title"))
+        self.txt_author.setPlaceholderText(t("wizard.step2.author_placeholder"))
+        self.txt_description.setPlaceholderText(t("wizard.step2.description_placeholder"))
+        
+        # Page 3
+        self.group_options.setTitle(t("wizard.step3.title"))
+        self.chk_venv.setText(t("wizard.step3.venv"))
+        self.lbl_venv_info.setText(t("wizard.step3.venv_info"))
+        self.lbl_structure_title.setText(t("wizard.step3.structure_title"))
+        
+        # Page 4
+        self.group_summary.setTitle(t("wizard.step4.title"))
+        self.lbl_summary_check.setText(t("wizard.step4.check"))
+        
+        # Page 5
+        self.group_progress.setTitle(t("wizard.step5.title"))
+        self.lbl_progress.setText(t("wizard.step5.generating"))
+        
+        # Page 6
+        self.group_result.setTitle(t("wizard.step6.title"))
+        
+        # Buttons
+        self.btn_back.setText(t("button.previous"))
+        self.btn_open_folder.setText(t("button.open_folder"))
+        self.btn_open_editor.setText(t("button.open_editor"))
+        self.btn_new_project.setText(t("button.new_project"))
+        self.btn_close.setText(t("button.close"))
+        
+        # Update navigation button text
+        self._update_navigation()
+        
+        # Re-update summary if on summary page
+        if self.stack.currentIndex() == 3:
+            self._update_summary()
+        
+        # ← NIEUW: Rebuild menu's
+        self._rebuild_menu()
+    
     def _show_settings(self):
         """Toon settings dialoog."""
         dialog = SettingsDialog(self.settings, self)
@@ -683,47 +830,62 @@ class ProjectGeneratorWindow(QMainWindow):
             # Refresh auteur veld na opslaan settings
             if self.settings.default_author:
                 self.txt_author.setText(self.settings.default_author)
+            
+            # Check if language changed
+            if self.translator.locale != self.settings.locale:
+                self.translator.set_locale(self.settings.locale)
+                self._refresh_ui()
     
     def _show_help(self):
         """Toon help."""
-        help_file = Path(__file__).parent.parent / "docs" / "HELP.md"
+        # Bepaal welk bestand op basis van huidige taal
+        locale = self.translator.locale
+        help_file = Path(__file__).parent.parent / "docs" / f"HELP_{locale}.md"
+        
+        # Fallback naar Engels
+        if not help_file.exists():
+            help_file = Path(__file__).parent.parent / "docs" / "HELP_en_US.md"
         
         if help_file.exists():
             content = help_file.read_text(encoding='utf-8')
-            self._show_markdown_dialog("Help", content)
+            self._show_markdown_dialog(t("menu.help.help"), content)
         else:
             QMessageBox.information(
                 self,
-                "Help",
-                "Help documentatie is niet gevonden.\n\n"
-                "Verwachte locatie: docs/HELP.md"
+                t("menu.help.help"),
+                "Help documentation not found."
             )
-    
+
     def _show_changelog(self):
         """Toon changelog."""
-        changelog_file = Path(__file__).parent.parent / "docs" / "CHANGELOG.md"
+        # Bepaal welk bestand op basis van huidige taal
+        locale = self.translator.locale
+        changelog_file = Path(__file__).parent.parent / "docs" / f"CHANGELOG_{locale}.md"
+        
+        # Fallback naar Engels
+        if not changelog_file.exists():
+            changelog_file = Path(__file__).parent.parent / "docs" / "CHANGELOG_en_US.md"
         
         if changelog_file.exists():
             content = changelog_file.read_text(encoding='utf-8')
-            self._show_markdown_dialog("Changelog", content)
+            self._show_markdown_dialog(t("menu.help.changelog"), content)
         else:
             QMessageBox.information(
                 self,
-                "Changelog",
-                "Changelog is niet gevonden.\n\n"
-                "Verwachte locatie: docs/CHANGELOG.md"
+                t("menu.help.changelog"),
+                "Changelog not found."
             )
     
     def _show_about(self):
         """Toon about dialog."""
-        about_text = """
-<h2>Python Project Generator</h2>
-<p><b>Versie:</b> 1.0.3</p>
-<p><b>Auteur:</b> Barremans</p>
-<p><b>Beschrijving:</b><br>
-Automatische generator voor professionele Python projectstructuren.</p>
+        about_text = f"""
+<h2>{t("app.title")}</h2>
+<p><b>{t("about.version")}</b> 1.0.5</p>
+<p><b>{t("about.author")}</b> Barremans</p>
+<p><b>{t("about.description")}</b><br>
+{t("about.description_text")}</p>
 
-<p><b>Kenmerken:</b></p>
+<p><b>{t("about.features")}</b></p>
 <ul>
 <li>Wizard interface</li>
 <li>Template-based systeem</li>
@@ -732,19 +894,19 @@ Automatische generator voor professionele Python projectstructuren.</p>
 <li>Export scripts</li>
 <li>PyInstaller templates</li>
 <li>Keyboard shortcuts</li>
-<li>Configureerbare instellingen</li>
+<li>Meertaligheid (NL/EN)</li>
 </ul>
 
-<p><b>Ontwikkeld met:</b><br>
+<p><b>{t("about.developed_with")}</b><br>
 Python 3.11+ en PyQt6</p>
 
 <p style='color: #666; margin-top: 20px;'>
-© 2024 Barremans - Alle rechten voorbehouden
+{t("about.copyright")}
 </p>
 """
         
         msg = QMessageBox(self)
-        msg.setWindowTitle("Over Project Generator")
+        msg.setWindowTitle(t("about.title"))
         msg.setTextFormat(Qt.TextFormat.RichText)
         msg.setText(about_text)
         msg.setIcon(QMessageBox.Icon.Information)
@@ -778,7 +940,7 @@ Python 3.11+ en PyQt6</p>
         
         layout.addWidget(text_edit)
         
-        btn_close = QPushButton("Sluiten")
+        btn_close = QPushButton(t("button.close"))
         btn_close.clicked.connect(dialog.accept)
         btn_close.setStyleSheet("""
             QPushButton {

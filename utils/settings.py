@@ -1,9 +1,9 @@
 """
 utils/settings.py
 
-Beschrijving: Applicatie settings beheer
+Beschrijving: Settings manager voor applicatie configuratie
 Applicatie: Project Generator
-Versie: 1.0.3
+Versie: 1.0.5
 Auteur: Barremans
 """
 
@@ -13,78 +13,67 @@ from typing import Optional
 
 
 class AppSettings:
-    """
-    Beheer applicatie instellingen.
-    """
+    """Beheer applicatie settings."""
     
     def __init__(self):
-        self.settings_file = Path.home() / ".project_generator" / "settings.json"
-        self.settings = self._load_settings()
+        self.settings_dir = Path.home() / ".project_generator"
+        self.settings_file = self.settings_dir / "settings.json"
+        self._data = self._load()
     
-    def _load_settings(self) -> dict:
-        """Laad settings uit bestand."""
+    def _load(self) -> dict:
+        """Laad settings van disk."""
         if self.settings_file.exists():
             try:
-                with open(self.settings_file, 'r', encoding='utf-8') as f:
+                with open(self.settings_file, "r", encoding="utf-8") as f:
                     return json.load(f)
-            except Exception as e:
-                print(f"Fout bij laden settings: {e}")
-                return self._get_default_settings()
-        else:
-            return self._get_default_settings()
-    
-    def _get_default_settings(self) -> dict:
-        """Standaard instellingen."""
+            except Exception:
+                pass
+        
         return {
             "default_author": "",
             "default_project_root": "C:\\",
             "editor_path": "code",
-            "version": "1.0.3"
+            "locale": "nl_NL"  # ← NIEUW
         }
     
-    def save(self):
-        """Sla settings op naar bestand."""
+    def save(self) -> bool:
+        """Sla settings op naar disk."""
         try:
-            self.settings_file.parent.mkdir(parents=True, exist_ok=True)
-            
-            with open(self.settings_file, 'w', encoding='utf-8') as f:
-                json.dump(self.settings, f, indent=4)
+            self.settings_dir.mkdir(parents=True, exist_ok=True)
+            with open(self.settings_file, "w", encoding="utf-8") as f:
+                json.dump(self._data, f, indent=4, ensure_ascii=False)
             return True
-        except Exception as e:
-            print(f"Fout bij opslaan settings: {e}")
+        except Exception:
             return False
-    
-    def get(self, key: str, default=None):
-        """Haal een setting op."""
-        return self.settings.get(key, default)
-    
-    def set(self, key: str, value):
-        """Zet een setting."""
-        self.settings[key] = value
     
     @property
     def default_author(self) -> str:
-        """Standaard auteur."""
-        return self.get("default_author", "")
+        return self._data.get("default_author", "")
     
     @default_author.setter
     def default_author(self, value: str):
-        self.set("default_author", value)
+        self._data["default_author"] = value
     
     @property
     def default_project_root(self) -> str:
-        """Standaard project root."""
-        return self.get("default_project_root", "C:\\")
+        return self._data.get("default_project_root", "C:\\")
     
     @default_project_root.setter
     def default_project_root(self, value: str):
-        self.set("default_project_root", value)
+        self._data["default_project_root"] = value
     
     @property
     def editor_path(self) -> str:
-        """Pad naar editor."""
-        return self.get("editor_path", "code")
+        return self._data.get("editor_path", "code")
     
     @editor_path.setter
     def editor_path(self, value: str):
-        self.set("editor_path", value)
+        self._data["editor_path"] = value
+    
+    @property
+    def locale(self) -> str:  # ← NIEUW
+        return self._data.get("locale", "nl_NL")
+    
+    @locale.setter
+    def locale(self, value: str):  # ← NIEUW
+        self._data["locale"] = value

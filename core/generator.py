@@ -3,7 +3,7 @@ core/generator.py
 
 Beschrijving: Projectgenerator - creëert volledige projectstructuur
 Applicatie: Project Generator
-Versie: 1.0.1
+Versie: 1.0.3
 Auteur: Barremans
 """
 
@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Optional, List
 import subprocess
 import sys
+import shutil
 
 from core.context import ProjectContext
 from core.templates import ProjectTemplate, FolderTemplate, FileTemplate
@@ -63,16 +64,20 @@ class ProjectGenerator:
         if not self._generate_root_files():
             return False
         
-        # Stap 5: Virtuele omgeving (optioneel)
+        # Stap 5: Kopieer standaard icons
+        if not self._copy_default_icons():
+            print("⚠️  Waarschuwing: Standaard icons niet gekopieerd")
+        
+        # Stap 6: Virtuele omgeving (optioneel)
         if self.template.create_venv:
             if not self._create_venv():
                 print("⚠️  Waarschuwing: Venv niet aangemaakt, maar project gaat door")
         
-        # Stap 6: Export script toevoegen
+        # Stap 7: Export script toevoegen
         if not self._add_export_script():
             print("⚠️  Waarschuwing: Export script niet toegevoegd")
         
-        # Stap 7: Spec file toevoegen
+        # Stap 8: Spec file toevoegen
         if not self._add_spec_file():
             print("⚠️  Waarschuwing: Spec file niet toegevoegd")
         
@@ -94,7 +99,6 @@ class ProjectGenerator:
         # Check of project directory al bestaat
         if self.context.project_root.exists() and not is_directory_empty(self.context.project_root):
             print(f"⚠️  Waarschuwing: Directory {self.context.project_root} bestaat al en is niet leeg")
-            # We gaan toch door, maar waarschuwen
         
         print("✅ Validatie geslaagd")
         return True
@@ -121,7 +125,7 @@ class ProjectGenerator:
             if not self._generate_folder(folder_path, folder_template):
                 return False
         
-        print(f"✅ {len(self.created_folders) - 1} folders aangemaakt")  # -1 voor root
+        print(f"✅ {len(self.created_folders)} folders aangemaakt")
         return True
     
     def _generate_folder(self, folder_path: Path, folder_template: FolderTemplate, 
@@ -132,7 +136,7 @@ class ProjectGenerator:
         Args:
             folder_path: Volledig pad naar de folder
             folder_template: Template voor deze folder
-            parent_path: Pad van parent folder (voor relative path berekening)
+            parent_path: Pad van parent folder
         """
         # Maak folder
         if not ensure_directory(folder_path):
@@ -206,6 +210,52 @@ class ProjectGenerator:
         print(f"✅ {len(self.template.root_files)} root bestanden aangemaakt")
         return True
     
+    def _copy_default_icons(self) -> bool:
+        """Kopieer standaard icons naar het gegenereerde project."""
+        print("🎨 Standaard icons kopiëren...")
+        
+        # Bron: icons van de generator zelf
+        generator_root = Path(__file__).parent.parent
+        source_icons_dir = generator_root / "assets" / "icons"
+        
+        # Bestemming: icons folder in het nieuwe project
+        dest_icons_dir = self.context.project_root / "assets" / "icons"
+        
+        # Check of bron bestaat
+        if not source_icons_dir.exists():
+            print(f"⚠️  Bron icons folder niet gevonden: {source_icons_dir}")
+            print(f"ℹ️  Tip: Run eerst 'python utils/icon_generator.py' om icons te genereren")
+            return False
+        
+        # Zorg dat bestemming bestaat
+        if not ensure_directory(dest_icons_dir):
+            self.errors.append(f"Kon icons folder niet aanmaken: {dest_icons_dir}")
+            return False
+        
+        # Kopieer alle .png en .ico bestanden
+        copied_count = 0
+        icon_extensions = {'.png', '.ico'}
+        
+        try:
+            for icon_file in source_icons_dir.iterdir():
+                if icon_file.suffix.lower() in icon_extensions:
+                    dest_file = dest_icons_dir / icon_file.name
+                    shutil.copy2(icon_file, dest_file)
+                    self.created_files.append(dest_file)
+                    copied_count += 1
+            
+            if copied_count > 0:
+                print(f"✅ {copied_count} icons gekopieerd naar assets/icons/")
+                return True
+            else:
+                print(f"⚠️  Geen icons gevonden om te kopiëren")
+                return False
+                
+        except Exception as e:
+            self.errors.append(f"Fout bij kopiëren icons: {str(e)}")
+            print(f"❌ Fout bij kopiëren icons: {str(e)}")
+            return False
+    
     def _create_venv(self) -> bool:
         """Maak virtuele omgeving aan."""
         print("🐍 Virtuele omgeving aanmaken...")
@@ -219,13 +269,13 @@ class ProjectGenerator:
                 check=True,
                 capture_output=True,
                 text=True,
-                timeout=300  # 5 minuten timeout
+                timeout=300
             )
             
             self.created_folders.append(venv_path)
             print(f"✅ Virtuele omgeving aangemaakt: {venv_path}")
             
-            # Upgrade pip (optioneel maar aanbevolen)
+            # Upgrade pip
             print("📦 Pip upgraden...")
             pip_path = venv_path / "Scripts" / "pip.exe"
             
@@ -236,7 +286,7 @@ class ProjectGenerator:
                         check=True,
                         capture_output=True,
                         text=True,
-                        timeout=120  # 2 minuten timeout
+                        timeout=120
                     )
                     print("✅ Pip geüpgraded")
                 except subprocess.TimeoutExpired:
@@ -251,19 +301,24 @@ class ProjectGenerator:
             if req_file.exists():
                 print("📦 Requirements installeren...")
                 try:
-                    # Lees requirements om te zien of er iets in staat
                     req_content = req_file.read_text().strip()
-                    if req_content and not req_content.startswith("#"):
+                    # Check of er daadwerkelijk packages in staan (niet alleen comments)
+                    has_packages = any(
+                        line.strip() and not line.strip().startswith('#') 
+                        for line in req_content.split('\n')
+                    )
+                    
+                    if has_packages:
                         subprocess.run(
                             [str(pip_path), "install", "-r", str(req_file)],
                             check=True,
                             capture_output=True,
                             text=True,
-                            timeout=300  # 5 minuten timeout
+                            timeout=300
                         )
                         print("✅ Requirements geïnstalleerd")
                     else:
-                        print("ℹ️  Requirements.txt is leeg")
+                        print("ℹ️  Requirements.txt bevat geen packages")
                 except subprocess.TimeoutExpired:
                     print("⚠️  Requirements installatie timeout")
                 except subprocess.CalledProcessError as e:
@@ -547,17 +602,22 @@ exe = EXE(
     disable_windowed_traceback=False,
 )
 
-# Verzamel extra data (assets, docs, etc)
+# Verzamel extra data (assets, docs, css, etc)
 collect_datas = []
 
-if os.path.isdir("docs"):
+if os.path.isdir("assets"):
     collect_datas.append(
-        Tree("docs", prefix="docs", excludes=["**/__pycache__/*"])
+        Tree("assets", prefix="assets", excludes=["**/__pycache__/*"])
     )
 
 if os.path.isdir("css"):
     collect_datas.append(
         Tree("css", prefix="css", excludes=["**/__pycache__/*"])
+    )
+
+if os.path.isdir("docs"):
+    collect_datas.append(
+        Tree("docs", prefix="docs", excludes=["**/__pycache__/*"])
     )
 
 if os.path.isdir("data"):
