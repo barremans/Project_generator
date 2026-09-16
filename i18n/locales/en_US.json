@@ -65,11 +65,15 @@
     "menu.help.help": "Help",
     "menu.help.changelog": "Changelog",
     "menu.help.about": "About",
+    "menu.help.updates": "Check for updates...",
     
     "menu.language": "Language",
     
     "menu.tools": "Tools",
     "menu.tools.headers_structuur": "Headers && Structure...",
+    
+    "menu.rapporteren": "Report",
+    "menu.rapporteren.bug_feature": "Report bug or feature...",
     
     "settings.title": "Settings",
     "settings.defaults": "Default Values",

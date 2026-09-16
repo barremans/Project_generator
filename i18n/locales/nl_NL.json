@@ -65,11 +65,15 @@
     "menu.help.help": "Help",
     "menu.help.changelog": "Changelog",
     "menu.help.about": "Over",
+    "menu.help.updates": "Controleer op updates...",
     
     "menu.language": "Taal",
     
     "menu.tools": "Tools",
     "menu.tools.headers_structuur": "Headers && Structuur...",
+    
+    "menu.rapporteren": "Rapporteren",
+    "menu.rapporteren.bug_feature": "Bug of feature melden...",
     
     "settings.title": "Instellingen",
     "settings.defaults": "Standaard Waarden",

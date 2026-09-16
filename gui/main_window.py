@@ -2,8 +2,27 @@
 File:    /gui/main_window.py
 Rol:     Hoofdvenster met wizard interface
 Applicatie: Project Generator
-Versie:  1.1.0
+Versie:  1.2.0
 Auteur:  Barremans
+Changes: 1.2.0 - NIEUW: "Rapporteren"-menu toegevoegd (tussen Tools en
+                  Help, in zowel _setup_menu() als _rebuild_menu()) met
+                  actie "Bug of feature melden..." die
+                  gui/bug_report_dialog.py::BugDialog opent — geport vanuit
+                  ArticleSearch, zie dat bestand voor details (o.a.: naam
+                  wordt voorgevuld vanuit settings.default_author i.p.v.
+                  Azure AD, en het GitHub-token moet nog ingevuld worden).
+                  Update-check toegevoegd: automatisch bij opstart (stil
+                  tenzij er een nieuwere versie is — dan een vraag om te
+                  downloaden) via core/updater.py::check_for_update(),
+                  plus een nieuwe Help-actie "Controleer op updates..."
+                  voor een handmatige check (toont ook expliciet wanneer
+                  je al up-to-date bent). Zie core/updater.py voor de
+                  AANNAME dat de repo "barremans/project-generator" heet —
+                  nog te bevestigen.
+                  LET OP: i18n-keys "menu.rapporteren"/
+                  "menu.rapporteren.bug_feature"/"menu.help.updates"
+                  bestaan nog NIET in i18n/locales/*.json (zelfde
+                  kanttekening als bij "menu.tools" in v1.1.0).
 Changes: 1.1.0 - NIEUW: "Tools"-menu toegevoegd (tussen Taal en Help, in
                   zowel _setup_menu() als _rebuild_menu() — anders verdwijnt
                   het na een taalwisseling) met actie "Headers & Structuur..."
@@ -40,7 +59,7 @@ from PyQt6.QtWidgets import (
     QStackedWidget, QGroupBox, QFormLayout, QMenuBar,
     QDialog, QComboBox
 )
-from PyQt6.QtCore import Qt, QThread, pyqtSignal
+from PyQt6.QtCore import Qt, QThread, pyqtSignal, QTimer
 from PyQt6.QtGui import QFont, QKeySequence, QShortcut, QAction, QIcon
 from pathlib import Path
 import subprocess
@@ -52,6 +71,9 @@ from core.generator import ProjectGenerator
 from utils.settings import AppSettings
 from gui.settings_dialog import SettingsDialog
 from gui.tools_dialog import ToolsDialog
+from gui.bug_report_dialog import BugDialog
+from core.updater import check_for_update, download_latest_release
+from app.version import __version__
 from i18n import get_translator, t
 
 
@@ -126,6 +148,10 @@ class ProjectGeneratorWindow(QMainWindow):
         
         # Load defaults
         self._load_default_values()
+        
+        # Update-check (stil, na het tonen van het venster — blokkeert de
+        # opstart niet)
+        QTimer.singleShot(500, self._check_for_updates_startup)
     
     def _setup_window(self):
         """Setup window properties."""
@@ -186,6 +212,13 @@ class ProjectGeneratorWindow(QMainWindow):
         headers_structure_action.triggered.connect(self._open_tools_dialog)
         tools_menu.addAction(headers_structure_action)
         
+        # Rapporteren menu
+        report_menu = menubar.addMenu(t("menu.rapporteren"))
+        
+        bug_feature_action = QAction(t("menu.rapporteren.bug_feature"), self)
+        bug_feature_action.triggered.connect(self._open_bug_report_dialog)
+        report_menu.addAction(bug_feature_action)
+        
         # Help menu
         help_menu = menubar.addMenu(t("menu.help"))
         
@@ -197,6 +230,10 @@ class ProjectGeneratorWindow(QMainWindow):
         changelog_action = QAction(QIcon(str(self._get_icon_path("info.png"))), t("menu.help.changelog"), self)
         changelog_action.triggered.connect(self._show_changelog)
         help_menu.addAction(changelog_action)
+        
+        updates_action = QAction(t("menu.help.updates"), self)
+        updates_action.triggered.connect(self._check_for_updates_manual)
+        help_menu.addAction(updates_action)
         
         help_menu.addSeparator()
         
@@ -249,6 +286,13 @@ class ProjectGeneratorWindow(QMainWindow):
         headers_structure_action.triggered.connect(self._open_tools_dialog)
         tools_menu.addAction(headers_structure_action)
         
+        # Rapporteren menu
+        report_menu = self.menuBar().addMenu(t("menu.rapporteren"))
+        
+        bug_feature_action = QAction(t("menu.rapporteren.bug_feature"), self)
+        bug_feature_action.triggered.connect(self._open_bug_report_dialog)
+        report_menu.addAction(bug_feature_action)
+        
         # Help menu
         help_menu = self.menuBar().addMenu(t("menu.help"))
         
@@ -260,6 +304,10 @@ class ProjectGeneratorWindow(QMainWindow):
         changelog_action = QAction(QIcon(str(self._get_icon_path("info.png"))), t("menu.help.changelog"), self)
         changelog_action.triggered.connect(self._show_changelog)
         help_menu.addAction(changelog_action)
+        
+        updates_action = QAction(t("menu.help.updates"), self)
+        updates_action.triggered.connect(self._check_for_updates_manual)
+        help_menu.addAction(updates_action)
         
         help_menu.addSeparator()
         
@@ -899,6 +947,49 @@ class ProjectGeneratorWindow(QMainWindow):
         )
         dialog = ToolsDialog(self, initial_path=initial_path)
         dialog.exec()
+
+    def _open_bug_report_dialog(self):
+        """Opent de bug/feature-melding-dialoog (geport uit ArticleSearch)."""
+        dialog = BugDialog(self, settings=self.settings)
+        dialog.exec()
+
+    def _check_for_updates_startup(self):
+        """
+        Stille update-check bij opstart: toont NIETS als je al up-to-date
+        bent, vraagt enkel om te downloaden als er een nieuwere versie is.
+        """
+        def _on_result(is_newer: bool):
+            if is_newer:
+                reply = QMessageBox.question(
+                    self, "Update beschikbaar",
+                    "Er is een nieuwere versie van Project Generator beschikbaar.\n"
+                    "Nu downloaden?",
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                )
+                if reply == QMessageBox.StandardButton.Yes:
+                    download_latest_release(self)
+
+        check_for_update(__version__, parent=self, callback=_on_result)
+
+    def _check_for_updates_manual(self):
+        """Handmatige update-check via Help-menu — toont ook expliciet 'up-to-date'."""
+        def _on_result(is_newer: bool):
+            if is_newer:
+                reply = QMessageBox.question(
+                    self, "Update beschikbaar",
+                    "Er is een nieuwere versie van Project Generator beschikbaar.\n"
+                    "Nu downloaden?",
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                )
+                if reply == QMessageBox.StandardButton.Yes:
+                    download_latest_release(self)
+            else:
+                QMessageBox.information(
+                    self, "Up-to-date",
+                    f"Je gebruikt de nieuwste versie ({__version__})."
+                )
+
+        check_for_update(__version__, parent=self, callback=_on_result)
 
     def _show_help(self):
         """Toon help."""

@@ -12,54 +12,53 @@ rem Role:    Bouwt de PyInstaller-EXE en genereert/compileert het Inno
 rem          Setup installer-script (.iss), voor zowel interactief gebruik
 rem          als niet-interactieve aanroep vanuit build_and_publish.ps1
 rem          (via env vars AS_BUMP_PART, AS_MAKE_INSTALLER, AS_DO_SIGN).
-rem Version: 1.4.0
-rem Author:  Bart Bossuyt
-rem Changes: 1.4.0 - Hernoemd van build_installer15.bat naar
-rem                   build_installer.bat (versienummer uit bestandsnaam
-rem                   gehaald, consistent met de Project_Generator-
-rem                   standaardnaamgeving voor nieuwe apps). build_and_
-rem                   publish.ps1 is meegewijzigd (verwijst nu naar
-rem                   build_installer.bat i.p.v. build_installer15.bat).
-rem                   Geen functionele wijziging aan de build-flow zelf.
-rem Changes: 1.3.0 - INTUNE-UPDATE-1: het gegenereerde installer-script
-rem                   sluit voortaan automatisch een reeds draaiende
-rem                   ArticleSearch.exe vóór het kopiëren van bestanden
-rem                   ([Setup]: CloseApplications=force,
-rem                   CloseApplicationsFilter=%PROJECT_NAME%.exe,
-rem                   RestartApplications=no - app wordt NIET automatisch
-rem                   herstart, want een Intune/SYSTEM-deployment mag geen
-rem                   GUI-app als SYSTEM opstarten). Dit lost het eigenlijke
-rem                   "update terwijl de app openstaat"-probleem op
-rem                   (gelockte exe/_internal-map bij overschrijven).
-rem                   Bijkomend, puur cosmetisch: nieuwe [Code]-sectie
-rem                   (IsUpgrade() + InitializeWizard()) toont in de
-rem                   welkomsttekst van de wizard "bijwerken naar versie
-rem                   X" i.p.v. de standaardtekst wanneer een vorige
-rem                   installatie (zelfde AppId) gedetecteerd wordt in het
-rem                   register - functioneel verandert er niets, enkel de
-rem                   getoonde tekst. Beide wijzigingen zijn silent-install-
-rem                   veilig (CloseApplications=force vraagt niets in
-rem                   /VERYSILENT-modus; WizardForm bestaat ook silent,
-rem                   wordt dan gewoon niet getoond) en dus compatibel met
-rem                   het huidige Intune/SYSTEM-deploymentpad
-rem                   (PrivilegesRequired=admin, silent via Intune Win32-app
-rem                   install-commando). Geen wijziging aan de rest van de
-rem                   build-flow (signing, versie-bump, assets-kopie, enz.).
-rem Changes: 1.2.0 - (voorheen ongedocumenteerd, zie context v22/v24)
-rem                   Signeren optioneel via certificaatstore (analoog
-rem                   Networkmap-patroon) i.p.v. los .pfx-bestand + plaintext
-rem                   wachtwoord; ondersteuning voor env vars AS_BUMP_PART/
-rem                   AS_MAKE_INSTALLER/AS_DO_SIGN voor niet-interactieve
-rem                   aanroep vanuit build_and_publish.ps1.
-rem Changes: 1.0.0 - Baseline: installeert altijd in C:\ArticleSearch,
-rem                   admin vereist (Intune SYSTEM-deployment), versie-bump
-rem                   via bump_version.py, PyInstaller-build via .spec,
-rem                   Inno Setup-script-generatie en -compilatie.
+rem Version: 1.0.0
+rem Author:  Barremans
+rem Changes: 1.0.0 - Aangepast vanuit ArticleSearch (build_installer.bat
+rem                   v1.4.0, auteur Bart Bossuyt) naar Project Generator's
+rem                   eigen structuur:
+rem                   (1) PROJECT_NAME=Project_Generator, DISPLAY_NAME=
+rem                       "Python Project Generator" (los van elkaar,
+rem                       consistent met build_project_generator.bat
+rem                       v1.1.0) i.p.v. één hardcoded "ArticleSearch".
+rem                   (2) SPEC_FILE=Project_Generator.spec i.p.v.
+rem                       SearchArticle.spec.
+rem                   (3) Versie-bump roept nu "scripts\bump_version.py"
+rem                       aan i.p.v. root-"bump_version.py" — dit was de
+rem                       directe oorzaak van de crash ("can't open file
+rem                       ...\bump_version.py") toen dit script ongewijzigd
+rem                       overgenomen werd.
+rem                   (4) Versie wordt gelezen uit "app/version.py" i.p.v.
+rem                       root-"version.py" (Project Generator's version.py
+rem                       staat in app/, zie context_ProjectGenerator.md).
+rem                   (5) APPGUID hergebruikt de AL BESTAANDE GUID uit
+rem                       build_project_generator.bat v1.1.0
+rem                       ({A1B2C3D4-E5F6-7890-ABCD-EF1234567890}) i.p.v.
+rem                       ArticleSearch's GUID — kritiek voor correcte
+rem                       upgrade-detectie; een nieuwe GUID zou Windows
+rem                       elke build als een andere applicatie laten zien.
+rem                   (6) Stap [5] Assets kopiëren aangepast naar Project
+rem                       Generator's echte structuur: assets/, i18n/locales/,
+rem                       docs/, requirements.txt — i.p.v. ArticleSearch's
+rem                       assets/logs/label/docs/translations +
+rem                       requirements.txt/help.md/settings.json.
+rem                       BUGFIX t.o.v. build_project_generator.bat v1.1.0:
+rem                       dat script kopieerde docs/ NIET mee, terwijl
+rem                       gui/main_window.py::_show_help()/_show_changelog()
+rem                       wél HELP_{locale}.md/CHANGELOG_{locale}.md uit
+rem                       docs/ leest — zonder deze fix zou Help/Changelog
+rem                       in een gebouwde installer altijd falen.
+rem                   Overige logica (signing via certificaatstore,
+rem                   Intune-safe CloseApplications=force/
+rem                   RestartApplications=no, env-var-aansturing vanuit
+rem                   build_and_publish.ps1) ONGEWIJZIGD overgenomen uit
+rem                   ArticleSearch v1.4.0.
 rem ================================================
 
 rem 🧩 Basisconfig
-set "PROJECT_NAME=ArticleSearch"
-set "SPEC_FILE=SearchArticle.spec"
+set "PROJECT_NAME=Project_Generator"
+set "DISPLAY_NAME=Python Project Generator"
+set "SPEC_FILE=Project_Generator.spec"
 set "DST_FOLDER=dist"
 set "LOGFILE=build_log.txt"
 set "TIMESTAMP_URL=http://timestamp.sectigo.com"
@@ -67,13 +66,14 @@ rem Optioneel: exacte certificaat-subject om te forceren i.p.v. automatisch
 rem beste certificaat (/a). Leeg = automatisch.
 set "SIGN_SUBJECT="
 
-rem INTUNE-UPDATE-1: vaste AppId (zonder de Inno-escape "{{"), gebruikt om
-rem in het [Code]-blok te detecteren of er al een eerdere installatie
-rem (zelfde app) in het register staat - moet EXACT overeenkomen met de
-rem AppId hieronder bij [Setup] (daar WEL met "{{" geschreven, dat is de
-rem Inno-eigen manier om een letterlijke "{" te noteren in een directive-
-rem waarde). Wijzig je de AppId hieronder, wijzig dan ook APPGUID mee.
-set "APPGUID={A1B2C3D4-E5F6-47A8-9023-ABCDEF123456}"
+rem Vaste AppId (zonder de Inno-escape "{{"), gebruikt om in het [Code]-blok
+rem te detecteren of er al een eerdere installatie (zelfde app) in het
+rem register staat - moet EXACT overeenkomen met de AppId hieronder bij
+rem [Setup] (daar WEL met "{{" geschreven). Dit is de AL BESTAANDE GUID uit
+rem build_project_generator.bat v1.1.0 - NOOIT wijzigen zonder ook alle
+rem eerder uitgerolde installaties te vervangen (upgrade-detectie breekt
+rem anders).
+set "APPGUID={A1B2C3D4-E5F6-7890-ABCD-EF1234567890}"
 
 rem ---- Python uit .venv prefereren ----
 set "PYEXE="
@@ -90,7 +90,7 @@ echo [info] Python: %PYEXE%
 "%PYEXE%" -V >nul 2>&1 || (echo ❌ Geen werkende Python gevonden.& pause & exit /b 1)
 
 rem ================================================
-rem [S0] Signing - optioneel, default N (naar Networkmap-patroon)
+rem [S0] Signing - optioneel, default N
 rem ================================================
 set "DO_SIGN=N"
 if defined AS_DO_SIGN set "DO_SIGN=%AS_DO_SIGN%"
@@ -105,7 +105,7 @@ if /I "%DO_SIGN%"=="J" if not defined SIGNTOOL_EXE set "DO_SIGN=N"
 if /I "%DO_SIGN%"=="J" if defined SIGNTOOL_EXE echo [sign] signtool: %SIGNTOOL_EXE%
 if /I "%DO_SIGN%"=="J" if defined SIGNTOOL_EXE echo [sign] Certificaatselectie: automatisch /a (certificaatstore, geen .pfx meer nodig)
 
-rem ---- Versie verhogen ----
+rem ---- Versie verhogen (scripts\bump_version.py -- NIET root) ----
 if defined AS_BUMP_PART (
   set "PART_TO_BUMP=%AS_BUMP_PART%"
   echo [0] 🔁 Versie-bump via parameter: %AS_BUMP_PART%
@@ -113,15 +113,15 @@ if defined AS_BUMP_PART (
   set /p PART_TO_BUMP=Welke versie wil je verhogen? ^(patch/minor/major^) : 
   if "%PART_TO_BUMP%"=="" set "PART_TO_BUMP=patch"
 )
-echo [0] 🔁 Versie verhogen via bump_version.py (%PART_TO_BUMP%)...
-"%PYEXE%" bump_version.py %PART_TO_BUMP% || (echo ❌ Versieverhoging mislukt.& pause & exit /b 1)
+echo [0] 🔁 Versie verhogen via scripts\bump_version.py (%PART_TO_BUMP%)...
+"%PYEXE%" scripts\bump_version.py %PART_TO_BUMP% || (echo ❌ Versieverhoging mislukt.& pause & exit /b 1)
 
-rem ---- Versie robuust uitlezen uit version.py ----
+rem ---- Versie robuust uitlezen uit app/version.py ----
 set "PY_READV=%TEMP%\__read_version_tmp.py"
 set "VER_TXT=%TEMP%\__version_out.txt"
 del /q "%PY_READV%" "%VER_TXT%" >nul 2>&1
 > "%PY_READV%" echo import importlib.util, io, os, re
->>"%PY_READV%" echo p=os.path.abspath('version.py'); v="0.0.0"
+>>"%PY_READV%" echo p=os.path.abspath('app/version.py'); v="0.0.0"
 >>"%PY_READV%" echo try:
 >>"%PY_READV%" echo ^    spec=importlib.util.spec_from_file_location("ver",p)
 >>"%PY_READV%" echo ^    m=importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
@@ -182,12 +182,14 @@ if not exist "%DST_FOLDER%\%BUILD_FOLDER%\%PROJECT_NAME%.exe" (
   pause & exit /b 1
 )
 
-rem 📁 Assets kopiëren
+rem 📁 Assets kopiëren (Project Generator's eigen structuur -- zie
+rem changelog hierboven, punt 6: docs/ toegevoegd t.o.v. build_project_
+rem generator.bat, dat dit vergat)
 echo [5] 📁 Assets kopiëren...
-for %%D in (assets logs label docs translations) do (
+for %%D in (assets i18n docs) do (
   if exist "%%D" xcopy /E /I /Y "%%D" "%DST_FOLDER%\%BUILD_FOLDER%\%%D" >nul
 )
-for %%F in (requirements.txt help.md settings.json) do (
+for %%F in (requirements.txt) do (
   if exist "%%F" copy /Y "%%F" "%DST_FOLDER%\%BUILD_FOLDER%\" >nul
 )
 > "%DST_FOLDER%\%BUILD_FOLDER%\version.txt" echo %NEW_VERSION%
@@ -220,14 +222,14 @@ echo [6b] 📝 Installer-script genereren...
 
 >>"%ISS_FILE%" echo ; --- Inno Setup script, automatisch gegenereerd ---
 >>"%ISS_FILE%" echo [Setup]
->>"%ISS_FILE%" echo AppId={{A1B2C3D4-E5F6-47A8-9023-ABCDEF123456}
->>"%ISS_FILE%" echo AppName=%PROJECT_NAME%
+>>"%ISS_FILE%" echo AppId={{%APPGUID:~1,-1%}
+>>"%ISS_FILE%" echo AppName=%DISPLAY_NAME%
 >>"%ISS_FILE%" echo AppVersion=%NEW_VERSION%
->>"%ISS_FILE%" echo AppVerName=%PROJECT_NAME% %NEW_VERSION%
+>>"%ISS_FILE%" echo AppVerName=%DISPLAY_NAME% %NEW_VERSION%
 >>"%ISS_FILE%" echo DefaultDirName=C:\%PROJECT_NAME%
 >>"%ISS_FILE%" echo DisableDirPage=yes
 >>"%ISS_FILE%" echo UsePreviousAppDir=no
->>"%ISS_FILE%" echo DefaultGroupName=%PROJECT_NAME%
+>>"%ISS_FILE%" echo DefaultGroupName=%DISPLAY_NAME%
 >>"%ISS_FILE%" echo DisableProgramGroupPage=yes
 >>"%ISS_FILE%" echo OutputDir=.
 >>"%ISS_FILE%" echo OutputBaseFilename=%PROJECT_NAME%Setup_%NEW_VERSION%
@@ -239,15 +241,13 @@ echo [6b] 📝 Installer-script genereren...
 >>"%ISS_FILE%" echo ArchitecturesInstallIn64BitMode=x64
 >>"%ISS_FILE%" echo DirExistsWarning=no
 >>"%ISS_FILE%" echo WizardStyle=modern
->>"%ISS_FILE%" echo SetupIconFile="%ABS_BUILD_FOLDER%\assets\logo.ico"
-rem INTUNE-UPDATE-1: sluit een draaiende ArticleSearch.exe automatisch af
-rem vóór het kopiëren van bestanden (lost gelockte-exe-fouten bij updates
-rem op). "force" = geen prompt, ook niet interactief - vereist voor een
+>>"%ISS_FILE%" echo SetupIconFile="%ABS_BUILD_FOLDER%\assets\icons\logo.ico"
+rem Sluit een draaiende Project_Generator.exe automatisch af vóór het
+rem kopiëren van bestanden (lost gelockte-exe-fouten bij updates op).
+rem "force" = geen prompt, ook niet interactief - vereist voor een
 rem probleemloze /VERYSILENT-run via Intune. RestartApplications=no: de
-rem app bewust NIET automatisch herstarten na install, want dat zou de
-rem GUI-app in de SYSTEM-context proberen op te starten (Intune draait de
-rem installer als SYSTEM, niet als de ingelogde gebruiker) - de gebruiker
-rem start ArticleSearch nadien zelf gewoon opnieuw op.
+rem app bewust NIET automatisch herstarten na install (Intune draait de
+rem installer als SYSTEM, niet als de ingelogde gebruiker).
 >>"%ISS_FILE%" echo CloseApplicationsFilter=%PROJECT_NAME%.exe
 >>"%ISS_FILE%" echo CloseApplications=force
 >>"%ISS_FILE%" echo RestartApplications=no
@@ -260,20 +260,18 @@ rem start ArticleSearch nadien zelf gewoon opnieuw op.
 >>"%ISS_FILE%" echo Source: "%ABS_BUILD_FOLDER%\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 >>"%ISS_FILE%" echo.
 >>"%ISS_FILE%" echo [Icons]
->>"%ISS_FILE%" echo Name: "{group}\%PROJECT_NAME%"; Filename: "{app}\%PROJECT_NAME%.exe"; WorkingDir: "{app}"; IconFilename: "{app}\assets\logo.ico"
->>"%ISS_FILE%" echo Name: "{commondesktop}\%PROJECT_NAME%"; Filename: "{app}\%PROJECT_NAME%.exe"; WorkingDir: "{app}"; IconFilename: "{app}\assets\logo.ico"; Tasks: desktopicon
+>>"%ISS_FILE%" echo Name: "{group}\%DISPLAY_NAME%"; Filename: "{app}\%PROJECT_NAME%.exe"; WorkingDir: "{app}"; IconFilename: "{app}\assets\icons\logo.ico"
+>>"%ISS_FILE%" echo Name: "{commondesktop}\%DISPLAY_NAME%"; Filename: "{app}\%PROJECT_NAME%.exe"; WorkingDir: "{app}"; IconFilename: "{app}\assets\icons\logo.ico"; Tasks: desktopicon
 >>"%ISS_FILE%" echo.
 >>"%ISS_FILE%" echo [Tasks]
 >>"%ISS_FILE%" echo Name: "desktopicon"; Description: "Maak een snelkoppeling op het bureaublad"; GroupDescription: "Extra opties:"
 >>"%ISS_FILE%" echo.
 >>"%ISS_FILE%" echo [Run]
->>"%ISS_FILE%" echo Filename: "{app}\%PROJECT_NAME%.exe"; WorkingDir: "{app}"; Description: "Start %PROJECT_NAME%"; Flags: nowait postinstall skipifsilent
+>>"%ISS_FILE%" echo Filename: "{app}\%PROJECT_NAME%.exe"; WorkingDir: "{app}"; Description: "Start %DISPLAY_NAME%"; Flags: nowait postinstall skipifsilent
 >>"%ISS_FILE%" echo.
-rem INTUNE-UPDATE-1: puur cosmetisch - toont "bijwerken naar versie X" i.p.v.
-rem de standaard welkomsttekst wanneer een vorige installatie (zelfde
-rem AppId) al in het register staat. Werkt ook onder een silent/Intune-run
-rem (WizardForm bestaat dan gewoon, wordt alleen niet zichtbaar getoond) -
-rem geen enkele invloed op het effectieve installatiegedrag.
+rem Puur cosmetisch - toont "bijwerken naar versie X" i.p.v. de standaard
+rem welkomsttekst wanneer een vorige installatie (zelfde AppId) al in het
+rem register staat. Werkt ook onder een silent/Intune-run.
 >>"%ISS_FILE%" echo [Code]
 >>"%ISS_FILE%" echo function IsUpgrade: Boolean;
 >>"%ISS_FILE%" echo var sPrevPath: String;
@@ -283,7 +281,7 @@ rem geen enkele invloed op het effectieve installatiegedrag.
 >>"%ISS_FILE%" echo.
 >>"%ISS_FILE%" echo procedure InitializeWizard();
 >>"%ISS_FILE%" echo begin
->>"%ISS_FILE%" echo if IsUpgrade then WizardForm.WelcomeLabel2.Caption := 'Dit zal %PROJECT_NAME% bijwerken naar versie %NEW_VERSION%.' + #13#10#13#10 + 'Klik op Volgende om verder te gaan.';
+>>"%ISS_FILE%" echo if IsUpgrade then WizardForm.WelcomeLabel2.Caption := 'Dit zal %DISPLAY_NAME% bijwerken naar versie %NEW_VERSION%.' + #13#10#13#10 + 'Klik op Volgende om verder te gaan.';
 >>"%ISS_FILE%" echo end;
 
 rem 🔨 Inno Setup compileren

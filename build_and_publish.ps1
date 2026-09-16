@@ -1,24 +1,20 @@
 # File:    build_and_publish.ps1
-# Rol:     ArticleSearch - Build + publish orchestrator
-# Versie:  1.2.0
-# Auteur:  Bart Bossuyt
-# Changes: 1.2.0 - Verwijzing aangepast van build_installer15.bat naar
-#                   build_installer.bat (dat script is hernoemd, geen
-#                   versienummer meer in de bestandsnaam). Repo-root-
-#                   commentaar bijgewerkt naar de nieuwe locatie
-#                   C:\PY\ArticleSearch (verhuisd vanaf
-#                   C:\searcharticle_code). Geen functionele wijziging.
-# Changes: 1.1.0 - BUGFIX: 'git push' aan het einde gaf geen foutmelding
-#                   meer bij een mislukte push (bv. non-fast-forward),
-#                   waardoor version.py/releases/latest/version.txt
-#                   lokaal gecommit bleven maar nooit naar GitHub gepusht
-#                   werden. Nu wordt de exitcode van 'git push' expliciet
-#                   gecontroleerd.
-# Run vanuit repo root (C:\PY\ArticleSearch):  .\build_and_publish.ps1
+# Rol:     Project Generator - Build + publish orchestrator
+# Versie:  1.0.0
+# Auteur:  Barremans
+# Changes: 1.0.0 - Aangepast vanuit ArticleSearch (build_and_publish.ps1
+#                   v1.2.0, auteur Bart Bossuyt) naar Project Generator:
+#                   enkel banner/commentaar/repo-root-pad aangepast — de
+#                   orkestratielogica zelf riep build_installer.bat/
+#                   publish.ps1 al generisch via relatieve paden aan
+#                   (geen hardcoded "ArticleSearch" in de code, enkel in
+#                   commentaar en de Write-Host-banner) en hoefde dus niet
+#                   te wijzigen.
+# Run vanuit repo root (C:\PY\Project_Generator):  .\build_and_publish.ps1
 #
 # Let op: gebruikt bewust GEEN PowerShell 7-only syntax (zoals de ?:
-# ternary-operator uit de vorige versie) - werkt daardoor zowel onder
-# Windows PowerShell 5.1 als PowerShell 7.x.
+# ternary-operator) - werkt daardoor zowel onder Windows PowerShell 5.1
+# als PowerShell 7.x.
 
 $ErrorActionPreference = "Stop"
 
@@ -37,7 +33,7 @@ if (-not (Test-Path $publishPs)) { throw "Niet gevonden: $publishPs" }
 
 Write-Host ""
 Write-Host "============================================================"
-Write-Host "  ArticleSearch - Build + Publish"
+Write-Host "  Project Generator - Build + Publish"
 Write-Host "============================================================"
 Write-Host ""
 
