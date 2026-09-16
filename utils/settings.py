@@ -3,13 +3,26 @@ utils/settings.py
 
 Beschrijving: Settings manager voor applicatie configuratie
 Applicatie: Project Generator
-Versie: 1.0.5
+Versie: 1.1.0
 Auteur: Barremans
+Changes: 1.1.0 - Uitgebreid t.b.v. de project-doc-tool-samenvoeging (zie
+                  context_ProjectDocTool.md §7.4): nieuwe properties
+                  tools_include_exts / tools_exclude_dirs /
+                  tools_exclude_files (persistente configuratie voor
+                  core/add_headers.py + core/generate_index.py, i.p.v. de
+                  hardcoded DEFAULT_*-constanten in die modules — die
+                  blijven wel de fallback wanneer er nog niets opgeslagen
+                  is), tools_default_applicatie / tools_default_versie
+                  (headerdefaults; auteur hergebruikt bewust het bestaande
+                  default_author i.p.v. een apart veld), en
+                  tools_last_project_root / tools_last_output_dir (zodat
+                  ToolsDialog de laatst gebruikte mappen onthoudt, zoals
+                  project-doc-tool's eigen main_window.py ook deed).
 """
 
 import json
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List
 
 
 class AppSettings:
@@ -33,7 +46,17 @@ class AppSettings:
             "default_author": "",
             "default_project_root": "C:\\",
             "editor_path": "code",
-            "locale": "nl_NL"  # ← NIEUW
+            "locale": "nl_NL",
+            # ← NIEUW (v1.1.0, tools/project-doc-tool-samenvoeging)
+            "tools_include_exts": [".py", ".txt", ".ini", ".yaml", ".yml"],
+            "tools_exclude_dirs": [
+                ".git", ".venv", "venv", "__pycache__", "build", "dist", ".vscode",
+            ],
+            "tools_exclude_files": [],
+            "tools_default_applicatie": "",
+            "tools_default_versie": "1.0.0",
+            "tools_last_project_root": "",
+            "tools_last_output_dir": "",
         }
     
     def save(self) -> bool:
@@ -77,3 +100,67 @@ class AppSettings:
     @locale.setter
     def locale(self, value: str):  # ← NIEUW
         self._data["locale"] = value
+
+    # ------------------------------------------------------------
+    # Tools (add_headers / generate_index) — NIEUW in v1.1.0
+    # ------------------------------------------------------------
+
+    @property
+    def tools_include_exts(self) -> List[str]:
+        return list(self._data.get("tools_include_exts", [".py", ".txt", ".ini", ".yaml", ".yml"]))
+
+    @tools_include_exts.setter
+    def tools_include_exts(self, value: List[str]):
+        self._data["tools_include_exts"] = list(value)
+
+    @property
+    def tools_exclude_dirs(self) -> List[str]:
+        return list(self._data.get(
+            "tools_exclude_dirs",
+            [".git", ".venv", "venv", "__pycache__", "build", "dist", ".vscode"],
+        ))
+
+    @tools_exclude_dirs.setter
+    def tools_exclude_dirs(self, value: List[str]):
+        self._data["tools_exclude_dirs"] = list(value)
+
+    @property
+    def tools_exclude_files(self) -> List[str]:
+        return list(self._data.get("tools_exclude_files", []))
+
+    @tools_exclude_files.setter
+    def tools_exclude_files(self, value: List[str]):
+        self._data["tools_exclude_files"] = list(value)
+
+    @property
+    def tools_default_applicatie(self) -> str:
+        """Leeg = automatisch afleiden uit de mapnaam (ToolsDialog-gedrag)."""
+        return self._data.get("tools_default_applicatie", "")
+
+    @tools_default_applicatie.setter
+    def tools_default_applicatie(self, value: str):
+        self._data["tools_default_applicatie"] = value
+
+    @property
+    def tools_default_versie(self) -> str:
+        return self._data.get("tools_default_versie", "1.0.0")
+
+    @tools_default_versie.setter
+    def tools_default_versie(self, value: str):
+        self._data["tools_default_versie"] = value
+
+    @property
+    def tools_last_project_root(self) -> str:
+        return self._data.get("tools_last_project_root", "")
+
+    @tools_last_project_root.setter
+    def tools_last_project_root(self, value: str):
+        self._data["tools_last_project_root"] = value
+
+    @property
+    def tools_last_output_dir(self) -> str:
+        return self._data.get("tools_last_output_dir", "")
+
+    @tools_last_output_dir.setter
+    def tools_last_output_dir(self, value: str):
+        self._data["tools_last_output_dir"] = value

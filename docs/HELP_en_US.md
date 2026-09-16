@@ -1,6 +1,6 @@
 # Python Project Generator - Help
 
-**Version:** 1.0.5  
+**Version:** 1.2.0  
 **Author:** Barremans
 
 ## 📚 Table of Contents
@@ -8,13 +8,14 @@
 1. [Overview](#overview)
 2. [Basic Usage](#basic-usage)
 3. [Settings](#settings)
-4. [Keyboard Shortcuts](#keyboard-shortcuts)
-5. [Project Structure](#project-structure)
-6. [Development Workflow](#development-workflow)
-7. [Modern Python Packaging](#modern-python-packaging)
-8. [Scripts System](#scripts-system)
-9. [Internationalization (i18n)](#internationalization-i18n)
-10. [FAQ](#faq)
+4. [Tools: Headers \& Structure](#tools-headers--structure)
+5. [Keyboard Shortcuts](#keyboard-shortcuts)
+6. [Project Structure](#project-structure)
+7. [Development Workflow](#development-workflow)
+8. [Modern Python Packaging](#modern-python-packaging)
+9. [Scripts System](#scripts-system)
+10. [Internationalization (i18n)](#internationalization-i18n)
+11. [FAQ](#faq)
 
 ---
 
@@ -99,6 +100,59 @@ Settings are saved in: `C:\Users\[USERNAME]\.project_generator\settings.json`
 
 ---
 
+## 🛠️ Tools: Headers & Structure
+
+Via **Menu → Tools → Headers & Structure...** you open a separate window
+with two tools, ported from the former standalone project-doc-tool
+project (which has thereby been fully absorbed into Project Generator):
+
+### How it works
+1. Click **📂 Choose project folder** — the folder you want to
+   analyse/document (doesn't have to be a freshly generated project — any
+   existing Python project folder works).
+2. Click **📂 Choose output folder** — where `PROJECT_STRUCTURE.md` will be
+   written. Automatically follows `<project folder>/docs` whenever you pick
+   a new project folder, but stays on your own choice afterwards.
+3. Three actions:
+   - **▶ Dry-run headers**: shows per file whether it has a correct
+     header, no header, or an incorrect header — changes nothing.
+   - **✍ Add headers**: actually adds/fixes headers, in Project
+     Generator's own header format.
+   - **📑 Generate project structure**: writes `PROJECT_STRUCTURE.md` (a
+     tree overview with per supported file the header metadata as a
+     fenced code block) and then automatically opens the output folder.
+
+Every **newly generated** project already gets this file automatically in
+`docs/` upon creation (see [Project Structure](#project-structure)) — the
+Tools dialog is mainly for existing/external projects, or to regenerate it
+after later changes.
+
+### Settings (Tools)
+Via the **"⚙ Settings"** button in the Tools dialog (separate from the main
+Settings above):
+- **Include extensions**: which file types are scanned (default `.py`,
+  `.txt`, `.ini`, `.yaml`, `.yml`)
+- **Exclude folders**: folders skipped entirely (default includes `.git`,
+  `.venv`, `__pycache__`, `build`, `dist`, `.vscode`)
+- **Exclude files**: filenames that are skipped
+- **Application**: fixed value for the "Applicatie:" line, or leave empty
+  to automatically use the folder name
+- **Default version**: fallback version for files without a header
+
+The author name for headers is **not** a separate field here — it's the
+same "Default Author" as in the main Settings.
+
+### Standalone (no GUI)
+The same functionality can also be run separately:
+```bash
+cd scripts
+python generate_project_structure.py --project-root "C:\PY\MyApp"
+python add_headers.py --project-root "C:\PY\MyApp"            # dry-run
+python add_headers.py --project-root "C:\PY\MyApp" --apply    # actual changes
+```
+
+---
+
 ## 📁 Project Structure
 ```
 MyProject/
@@ -118,6 +172,8 @@ MyProject/
 │   ├── __init__.py
 │   ├── main.py
 │   └── version.py
+├── core/                   # Core logic / shared functionality (Python package)
+│   └── __init__.py
 ├── assets/                 # Icons and images
 │   └── icons/
 ├── config/                 # Configuration files
@@ -128,6 +184,7 @@ MyProject/
 ├── data/                   # Data storage
 ├── docs/                   # Documentation
 │   └── changelog.md
+│   (PROJECT_STRUCTURE.md is generated here automatically after generation)
 ├── helpers/                # Helper functions
 ├── i18n/                   # Internationalization
 │   ├── translator.py
@@ -287,7 +344,7 @@ Download the latest version and overwrite the files. Your settings will be prese
 ## 📞 Contact & Support
 
 **Author:** Barremans  
-**Version:** 1.0.5  
+**Version:** 1.2.0  
 **License:** MIT
 
 For questions or issues, consult the changelog or contact the developer.

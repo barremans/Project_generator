@@ -1,0 +1,1327 @@
+"""
+core/default_templates.py
+
+Beschrijving: Standaard project templates
+Applicatie: Project Generator
+Versie: 1.0.6
+Auteur: Barremans
+
+Changelog v1.0.6:
+- Toegevoegd: build.bat template voor PyInstaller builds
+- Toegevoegd: BUILD.md documentatie template
+- Beide werken dynamisch met app/version.py
+"""
+
+from pathlib import Path
+from core.templates import ProjectTemplate, FolderTemplate, FileTemplate
+
+
+def get_version_py_template(version: str) -> str:
+    """Template voor version.py."""
+    return f'__version__ = "{version}"  # Pas dit manueel aan bij elke release\n'
+
+
+def get_main_py_template() -> str:
+    """Template voor main.py."""
+    return '''def main():
+    """Hoofdapplicatie entry point."""
+    print("Hello World!")
+
+
+if __name__ == "__main__":
+    main()
+'''
+
+
+def get_launch_json_template(app_name: str) -> str:
+    """Template voor .vscode/launch.json."""
+    python_path = "${workspaceFolder}/venv/Scripts/python.exe"
+    
+    return f'''{{
+    "version": "0.2.0",
+    "configurations": [
+        {{
+            "name": "Run {app_name}",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${{workspaceFolder}}/app/main.py",
+            "console": "integratedTerminal",
+            "python": "{python_path}"
+        }}
+    ]
+}}
+'''
+
+
+def get_settings_json_template() -> str:
+    """Template voor .vscode/settings.json."""
+    python_path = "${workspaceFolder}/venv/Scripts/python.exe"
+    
+    return f'''{{
+    "python.defaultInterpreterPath": "{python_path}",
+    "python.pythonPath": "{python_path}",
+    "editor.formatOnSave": true,
+    "python.formatting.provider": "black",
+    "python.linting.enabled": true,
+    "python.linting.flake8Enabled": true
+}}
+'''
+
+
+def get_settings_config_template() -> str:
+    """Template voor config/settings.json."""
+    return '''{
+    "app": {
+        "name": "Application",
+        "debug_mode": false,
+        "default_locale": "en_US"
+    }
+}
+'''
+
+
+def get_gitignore_template() -> str:
+    """Template voor .gitignore."""
+    return '''# Virtual Environment
+venv/
+.venv/
+env/
+ENV/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*.code-workspace
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# MyPy
+.mypy_cache/
+.dmypy.json
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Data
+data/*
+!data/.gitkeep
+
+# Logs
+*.log
+logs/
+
+# Local development
+*.local
+.env
+.env.local
+
+# TOML backups
+*.toml.bak
+
+# PyInstaller
+*.spec
+'''
+
+
+def get_main_qss_template() -> str:
+    """Template voor main.qss - Hoofd styling."""
+    return '''/* main.qss - Hoofd styling */
+
+QMainWindow, QDialog, QWidget {
+    background-color: #ffffff;
+    font-family: "Segoe UI", Verdana, Arial, sans-serif;
+    font-size: 11px;
+    color: #333333;
+}
+
+QPushButton {
+    padding: 6px 12px;
+    background-color: #ffffff;
+    border: 1px solid #cccccc;
+    border-radius: 4px;
+    color: #333333;
+    font-size: 11px;
+}
+
+QPushButton:hover {
+    background-color: #e6e6e6;
+}
+
+QPushButton:pressed {
+    background-color: #d4d4d4;
+}
+
+QPushButton[primary="true"] {
+    background-color: #2196F3;
+    color: white;
+    border: 1px solid #1976D2;
+}
+
+QLineEdit, QTextEdit, QPlainTextEdit {
+    padding: 6px;
+    background-color: #ffffff;
+    border: 1px solid #cccccc;
+    border-radius: 4px;
+}
+
+QTableWidget {
+    border: 1px solid #cccccc;
+    gridline-color: #dddddd;
+    selection-background-color: #e6f2ff;
+}
+
+QMenuBar {
+    background-color: #f0f0f0;
+    border-bottom: 1px solid #cccccc;
+}
+'''
+
+
+def get_detail_qss_template() -> str:
+    """Template voor detail.qss - Detail window styling."""
+    return '''/* detail.qss - Detail window styling */
+
+DetailWindow, DetailWindow QWidget {
+    background-color: #ffffff;
+    font-family: "Segoe UI", Verdana, Arial, sans-serif;
+    font-size: 11px;
+}
+
+QTabWidget {
+    background-color: #ffffff;
+    border: 1px solid #cccccc;
+}
+
+QTabBar::tab {
+    background: #f0f0f0;
+    border: 1px solid #cccccc;
+    padding: 6px 12px;
+}
+
+QTabBar::tab:selected {
+    background: #ffffff;
+    font-weight: bold;
+}
+'''
+
+
+def get_pyproject_toml_template(app_name: str, version: str, author: str, description: str) -> str:
+    """Template voor pyproject.toml (PEP 621)."""
+    desc = description if description else "Een Python applicatie"
+    package_name = app_name.lower().replace(' ', '-')
+    
+    return f'''[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "{package_name}"
+version = "{version}"
+description = "{desc}"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {{text = "MIT"}}
+authors = [
+    {{name = "{author}"}}
+]
+keywords = ["application", "python", "i18n"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.3",
+    "black>=23.0.0",
+    "flake8>=6.1.0",
+    "mypy>=1.7.0",
+    "tomli>=2.0.1",
+    "tomli-w>=1.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/{author.lower().replace(' ', '-')}/{package_name}"
+Repository = "https://github.com/{author.lower().replace(' ', '-')}/{package_name}"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["app*", "helpers*", "utils*", "i18n*"]
+
+[tool.black]
+line-length = 100
+target-version = ['py311']
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+'''
+
+
+def get_setup_py_template(app_name: str, version: str, author: str, description: str) -> str:
+    """Template voor setup.py (backwards compatibility)."""
+    desc = description if description else "Een Python applicatie"
+    package_name = app_name.lower().replace(' ', '-')
+    
+    return f'''"""
+setup.py - Package setup (backwards compatibility)
+"""
+
+from setuptools import setup, find_packages
+from pathlib import Path
+
+version = "{version}"
+try:
+    with open("app/version.py", "r") as f:
+        exec(f.read())
+        version = __version__
+except Exception:
+    pass
+
+readme_file = Path("README.md")
+long_description = readme_file.read_text(encoding="utf-8") if readme_file.exists() else ""
+
+requirements = []
+req_file = Path("requirements.txt")
+if req_file.exists():
+    with open(req_file, "r") as f:
+        requirements = [line.strip() for line in f if line.strip() and not line.startswith("#")]
+
+setup(
+    name="{package_name}",
+    version=version,
+    author="{author}",
+    description="{desc}",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
+    packages=find_packages(exclude=["tests*"]),
+    install_requires=requirements,
+    python_requires=">=3.11",
+    entry_points={{
+        "console_scripts": [
+            "{package_name}=app.main:main",
+        ],
+    }},
+    include_package_data=True,
+    package_data={{
+        "i18n": ["locales/*.json"],
+    }},
+)
+'''
+
+
+def get_manifest_in_template() -> str:
+    """Template voor MANIFEST.in."""
+    return '''include README.md
+include LICENSE
+include requirements.txt
+include pyproject.toml
+recursive-include config *.json
+recursive-include assets *.png *.ico *.jpg
+recursive-include css *.css *.qss
+recursive-include docs *.md
+recursive-include i18n/locales *.json
+global-exclude __pycache__
+global-exclude *.py[cod]
+'''
+
+
+def get_license_template(author: str) -> str:
+    """Template voor LICENSE (MIT)."""
+    from datetime import date
+    year = date.today().year
+    
+    return f'''MIT License
+
+Copyright (c) {year} {author}
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+'''
+
+
+def get_contributing_template(app_name: str) -> str:
+    """Template voor CONTRIBUTING.md."""
+    return f'''# Bijdragen aan {app_name}
+
+Bedankt voor je interesse!
+
+## Development Setup
+
+```bash
+python -m venv venv
+venv\\Scripts\\activate
+pip install -e ".[dev]"
+```
+
+## Code Style
+
+- Black voor formatting
+- Flake8 voor linting
+- MyPy voor type checking
+
+## Tests
+
+```bash
+pytest
+```
+
+## i18n
+
+Bij nieuwe UI teksten:
+1. Gebruik `t("key.name")`
+2. Voeg toe aan alle locale bestanden
+3. Test in meerdere talen
+'''
+
+
+def get_makefile_template(app_name: str) -> str:
+    """Template voor Makefile."""
+    return f'''# Makefile voor {app_name}
+
+.PHONY: install test lint format clean run build
+
+install:
+\tpip install -e .
+
+dev:
+\tpip install -e ".[dev]"
+
+test:
+\tpytest tests/ -v
+
+lint:
+\tflake8 app helpers utils i18n tests
+\tmypy app helpers utils i18n
+
+format:
+\tblack app helpers utils i18n tests
+
+clean:
+\tfind . -type d -name __pycache__ -exec rm -rf {{}} +
+\trm -rf build/ dist/ .pytest_cache/
+
+run:
+\tpython app/main.py
+
+build:
+\tpython setup.py sdist bdist_wheel
+'''
+
+
+def get_readme_template(app_name: str, version: str, author: str, description: str) -> str:
+    """Template voor README.md."""
+    desc_text = description if description else "Beschrijving van de applicatie"
+    package_name = app_name.lower().replace(' ', '-')
+    
+    return f'''# {app_name}
+
+**Versie:** {version}  
+**Auteur:** {author}
+
+## Beschrijving
+
+{desc_text}
+
+## Installatie
+
+```bash
+pip install {package_name}
+```
+
+## Development
+
+```bash
+python -m venv venv
+venv\\Scripts\\activate
+pip install -e ".[dev]"
+```
+
+## Build
+
+Zie `BUILD.md` voor build instructies.
+
+## Licentie
+
+MIT License - zie LICENSE
+'''
+
+
+def get_changelog_template(version: str) -> str:
+    """Template voor changelog.md."""
+    from datetime import date
+    today = date.today().strftime("%Y-%m-%d")
+    
+    return f'''# Changelog
+
+## [{version}] - {today}
+
+### Toegevoegd
+- Initiële release
+
+### Gewijzigd
+-
+
+### Opgelost
+-
+'''
+
+
+def get_help_md_template(app_name: str) -> str:
+    """Template voor help.md."""
+    return f'''# {app_name} - Help
+
+## Aan de slag
+
+Welkom bij {app_name}!
+
+## Gebruik
+
+TODO: Add usage instructions
+
+## FAQ
+
+TODO: Add frequently asked questions
+'''
+
+
+def get_requirements_txt_template() -> str:
+    """Template voor requirements.txt."""
+    return '''# Core dependencies
+# Voeg hier je packages toe
+'''
+
+
+def get_gitkeep_template() -> str:
+    """Template voor .gitkeep."""
+    return '''# Keep folder in git
+'''
+
+
+def get_scripts_readme_template() -> str:
+    """Template voor scripts/README.md."""
+    return '''# Scripts Folder
+
+Utility scripts voor project maintenance.
+
+## update_toml.py
+Update pyproject.toml
+
+## bump_version.py
+Verhoog versienummer
+
+## generate_requirements.py
+Genereer requirements.txt
+
+## validate_project.py
+Valideer project structuur
+'''
+
+
+def get_update_toml_script() -> str:
+    """Template voor scripts/update_toml.py."""
+    return '''"""
+scripts/update_toml.py
+Update pyproject.toml automatisch
+"""
+
+import argparse
+import sys
+from pathlib import Path
+import shutil
+
+def main():
+    parser = argparse.ArgumentParser(description="Update pyproject.toml")
+    parser.add_argument("--add-dep", help="Voeg runtime dependency toe")
+    parser.add_argument("--add-dev", help="Voeg dev dependency toe")
+    
+    args = parser.parse_args()
+    
+    project_root = Path(__file__).parent.parent
+    toml_file = project_root / "pyproject.toml"
+    
+    if not toml_file.exists():
+        print(f"❌ {toml_file} niet gevonden")
+        sys.exit(1)
+    
+    try:
+        import tomli
+        import tomli_w
+    except ImportError:
+        print("❌ tomli en tomli_w vereist")
+        sys.exit(1)
+    
+    with open(toml_file, "rb") as f:
+        data = tomli.load(f)
+    
+    shutil.copy2(toml_file, toml_file.with_suffix(".toml.bak"))
+    
+    if args.add_dep:
+        if "project" not in data:
+            data["project"] = {}
+        if "dependencies" not in data["project"]:
+            data["project"]["dependencies"] = []
+        
+        if args.add_dep not in data["project"]["dependencies"]:
+            data["project"]["dependencies"].append(args.add_dep)
+            print(f"✅ Dependency toegevoegd: {args.add_dep}")
+    
+    with open(toml_file, "wb") as f:
+        tomli_w.dump(data, f)
+    
+    print("✅ Klaar!")
+
+if __name__ == "__main__":
+    main()
+'''
+
+
+def get_bump_version_script() -> str:
+    """Template voor scripts/bump_version.py."""
+    return r'''"""
+scripts/bump_version.py
+Verhoog versienummer
+"""
+
+import argparse
+import re
+import sys
+from pathlib import Path
+from datetime import date
+
+def parse_version(version_str: str) -> tuple:
+    match = re.match(r"(\d+)\.(\d+)\.(\d+)", version_str)
+    if not match:
+        raise ValueError(f"Ongeldige versie: {version_str}")
+    return tuple(map(int, match.groups()))
+
+def bump_version(current: str, bump_type: str) -> str:
+    major, minor, patch = parse_version(current)
+    
+    if bump_type == "major":
+        return f"{major + 1}.0.0"
+    elif bump_type == "minor":
+        return f"{major}.{minor + 1}.0"
+    elif bump_type == "patch":
+        return f"{major}.{minor}.{patch + 1}"
+    else:
+        raise ValueError(f"Onbekend type: {bump_type}")
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("bump_type", choices=["major", "minor", "patch"])
+    args = parser.parse_args()
+    
+    version_file = Path("../app/version.py")
+    if not version_file.exists():
+        print("❌ version.py niet gevonden")
+        sys.exit(1)
+    
+    content = version_file.read_text()
+    match = re.search(r'__version__\s*=\s*["\'](\d+\.\d+\.\d+)["\']', content)
+    
+    if not match:
+        print("❌ Versie niet gevonden")
+        sys.exit(1)
+    
+    current_version = match.group(1)
+    new_version = bump_version(current_version, args.bump_type)
+    
+    print(f"🚀 {current_version} → {new_version}")
+    
+    # Update version.py
+    new_content = re.sub(
+        r'__version__\s*=\s*["\'][\d.]+["\']',
+        f'__version__ = "{new_version}"',
+        content
+    )
+    version_file.write_text(new_content)
+    
+    print("✅ Versie verhoogd!")
+
+if __name__ == "__main__":
+    main()
+'''
+
+
+def get_generate_requirements_script() -> str:
+    """Template voor scripts/generate_requirements.py."""
+    return '''"""
+scripts/generate_requirements.py
+Genereer requirements.txt
+"""
+
+import argparse
+from pathlib import Path
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--dev", action="store_true")
+    args = parser.parse_args()
+    
+    try:
+        import tomli
+    except ImportError:
+        print("❌ tomli vereist")
+        return
+    
+    toml_file = Path("../pyproject.toml")
+    with open(toml_file, "rb") as f:
+        data = tomli.load(f)
+    
+    requirements = []
+    
+    if "project" in data and "dependencies" in data["project"]:
+        requirements.extend(data["project"]["dependencies"])
+    
+    if args.dev:
+        if "project" in data and "optional-dependencies" in data["project"]:
+            if "dev" in data["project"]["optional-dependencies"]:
+                requirements.extend(data["project"]["optional-dependencies"]["dev"])
+    
+    output_file = Path("../requirements.txt")
+    with open(output_file, "w") as f:
+        f.write("# Gegenereerd uit pyproject.toml\\n\\n")
+        for req in requirements:
+            f.write(f"{req}\\n")
+    
+    print(f"✅ {len(requirements)} dependencies → requirements.txt")
+
+if __name__ == "__main__":
+    main()
+'''
+
+
+def get_validate_project_script() -> str:
+    """Template voor scripts/validate_project.py."""
+    return '''"""
+scripts/validate_project.py
+Valideer project structuur
+"""
+
+from pathlib import Path
+
+def check_file(path: Path) -> bool:
+    exists = path.exists()
+    print(f"{'✅' if exists else '❌'} {path.name}")
+    return exists
+
+def main():
+    print("🔍 Project Validatie\\n")
+    
+    print("📄 Bestanden:")
+    all_ok = True
+    all_ok &= check_file(Path("../pyproject.toml"))
+    all_ok &= check_file(Path("../README.md"))
+    all_ok &= check_file(Path("../LICENSE"))
+    
+    print("\\n📁 Folders:")
+    all_ok &= check_file(Path("../app"))
+    all_ok &= check_file(Path("../tests"))
+    all_ok &= check_file(Path("../i18n"))
+    
+    print("\\n" + ("✅ OK" if all_ok else "❌ Problemen gevonden"))
+
+if __name__ == "__main__":
+    main()
+'''
+
+
+def get_translator_py_template() -> str:
+    """Template voor i18n/translator.py."""
+    return '''"""
+i18n/translator.py
+Translation helper
+"""
+
+import json
+from pathlib import Path
+from typing import Dict, Optional
+
+class Translator:
+    def __init__(self, locale: str = "en_US"):
+        self.locale = locale
+        self.translations: Dict[str, str] = {}
+        self.fallback_locale = "en_US"
+        self.fallback_translations: Dict[str, str] = {}
+        self._load_translations()
+    
+    def _load_translations(self):
+        locales_dir = Path(__file__).parent / "locales"
+        
+        locale_file = locales_dir / f"{self.locale}.json"
+        if locale_file.exists():
+            with open(locale_file, "r", encoding="utf-8") as f:
+                self.translations = json.load(f)
+        
+        if self.locale != self.fallback_locale:
+            fallback_file = locales_dir / f"{self.fallback_locale}.json"
+            if fallback_file.exists():
+                with open(fallback_file, "r", encoding="utf-8") as f:
+                    self.fallback_translations = json.load(f)
+    
+    def get(self, key: str, **kwargs) -> str:
+        text = self.translations.get(key)
+        
+        if text is None:
+            text = self.fallback_translations.get(key)
+        
+        if text is None:
+            return key
+        
+        if kwargs:
+            try:
+                text = text.format(**kwargs)
+            except KeyError:
+                pass
+        
+        return text
+    
+    def set_locale(self, locale: str):
+        self.locale = locale
+        self._load_translations()
+
+_translator: Optional[Translator] = None
+
+def get_translator(locale: str = "en_US") -> Translator:
+    global _translator
+    if _translator is None:
+        _translator = Translator(locale)
+    return _translator
+
+def t(key: str, **kwargs) -> str:
+    return get_translator().get(key, **kwargs)
+'''
+
+
+def get_i18n_init_template() -> str:
+    """Template voor i18n/__init__.py."""
+    return '''"""
+i18n/__init__.py
+"""
+
+from i18n.translator import Translator, get_translator, t
+
+__all__ = ["Translator", "get_translator", "t"]
+'''
+
+
+def get_locale_nl_nl_template() -> str:
+    """Template voor i18n/locales/nl_NL.json."""
+    import json
+    data = {
+        "app.name": "Mijn Applicatie",
+        "app.welcome": "Welkom!",
+        "button.ok": "OK",
+        "button.cancel": "Annuleren"
+    }
+    return json.dumps(data, ensure_ascii=False, indent=4)
+
+
+def get_locale_en_us_template() -> str:
+    """Template voor i18n/locales/en_US.json."""
+    import json
+    data = {
+        "app.name": "My Application",
+        "app.welcome": "Welcome!",
+        "button.ok": "OK",
+        "button.cancel": "Cancel"
+    }
+    return json.dumps(data, ensure_ascii=False, indent=4)
+
+
+def get_i18n_readme_template() -> str:
+    """Template voor i18n/README.md."""
+    return '''# Internationalization (i18n)
+
+## Gebruik
+
+```python
+from i18n import t
+
+print(t("app.welcome"))
+```
+
+## Beschikbare talen
+
+- nl_NL (Nederlands)
+- en_US (English)
+'''
+
+
+# ===== BUILD TEMPLATES (v1.0.6) =====
+
+def get_build_bat_template(app_name: str, version: str) -> str:
+    """
+    Template voor build.bat script.
+    
+    Args:
+        app_name: Applicatie naam (bijv. "MyApp")
+        version: Versie (bijv. "1.0.0")
+    """
+    package_name = app_name.replace(' ', '_')
+    spec_file = f"{package_name}.spec"
+    
+    return f'''@echo off
+chcp 65001 >nul
+setlocal EnableExtensions EnableDelayedExpansion
+
+rem ================================================
+rem {app_name} - Build Script
+rem Versie: Dynamisch uit app/version.py
+rem ================================================
+
+echo.
+echo ========================================
+echo  {app_name} - Build Script
+echo ========================================
+echo.
+
+rem Altijd uitvoeren vanuit de map waar dit .bat bestand staat
+cd /d "%~dp0"
+
+rem ---- Config ----
+set "PROJECT_NAME={package_name}"
+set "SPEC_FILE={spec_file}"
+set "DST_FOLDER=dist"
+
+rem ---- Python detectie ----
+set "PYEXE="
+if exist "venv\\Scripts\\python.exe" set "PYEXE=venv\\Scripts\\python.exe"
+if not defined PYEXE if exist ".venv\\Scripts\\python.exe" set "PYEXE=.venv\\Scripts\\python.exe"
+if not defined PYEXE set "PYEXE=python"
+
+echo [INFO] Python: %PYEXE%
+"%PYEXE%" --version >nul 2>&1
+if errorlevel 1 (
+    echo.
+    echo ❌ ERROR: Python niet gevonden!
+    echo.
+    echo Zorg dat Python geinstalleerd is of activeer venv:
+    echo   venv\\Scripts\\activate
+    echo.
+    pause
+    exit /b 1
+)
+echo [OK] Python gevonden
+echo.
+
+rem ---- Versie verhogen? ----
+set /p DO_BUMP=Wil je de versie verhogen? [J/N] : 
+if /I "%DO_BUMP%"=="J" (
+    echo.
+    set /p PART_TO_BUMP=Welke versie? (patch/minor/major) [patch] : 
+    if "!PART_TO_BUMP!"=="" set "PART_TO_BUMP=patch"
+    
+    echo [1] Versie verhogen...
+    cd scripts
+    "%PYEXE%" bump_version.py !PART_TO_BUMP!
+    if errorlevel 1 (
+        echo ❌ Versie bump faalde
+        cd ..
+        pause
+        exit /b 1
+    )
+    cd ..
+    echo [OK] Versie verhoogd
+)
+echo.
+
+rem ---- Versie lezen ----
+echo [2] Versie lezen uit app/version.py...
+
+set "PY_READV=%TEMP%\\__read_version.py"
+set "VER_TXT=%TEMP%\\__version_out.txt"
+
+> "%PY_READV%" echo import re, io
+>>"%PY_READV%" echo with io.open('app/version.py', 'r', encoding='utf-8') as f:
+>>"%PY_READV%" echo     content = f.read()
+>>"%PY_READV%" echo m = re.search(r"__version__\\s*=\\s*[\\"']([0-9.]+)", content)
+>>"%PY_READV%" echo v = m.group(1) if m else "0.0.0"
+>>"%PY_READV%" echo with io.open(r'%VER_TXT%', 'w', encoding='utf-8') as f:
+>>"%PY_READV%" echo     f.write(v)
+
+"%PYEXE%" "%PY_READV%"
+if errorlevel 1 (
+    echo ❌ Kon versie niet lezen
+    pause
+    exit /b 1
+)
+
+set "APP_VERSION="
+set /p APP_VERSION=<"%VER_TXT%"
+del /q "%PY_READV%" "%VER_TXT%" >nul 2>&1
+
+if not defined APP_VERSION (
+    echo ❌ Geen versie gevonden
+    pause
+    exit /b 1
+)
+
+echo [OK] Versie: %APP_VERSION%
+echo.
+
+rem ---- Opschonen ----
+echo [3] Opschonen...
+if exist build rmdir /s /q build >nul 2>&1
+if exist "%DST_FOLDER%" rmdir /s /q "%DST_FOLDER%" >nul 2>&1
+echo [OK] Opgeruimd
+echo.
+
+rem ---- Dependencies ----
+echo [4] Dependencies...
+"%PYEXE%" -m pip install --upgrade pip --quiet
+
+if exist requirements.txt (
+    "%PYEXE%" -m pip install -r requirements.txt --quiet
+)
+
+rem PyInstaller check
+"%PYEXE%" -c "import PyInstaller" >nul 2>&1
+if errorlevel 1 (
+    echo [4a] PyInstaller installeren...
+    "%PYEXE%" -m pip install pyinstaller
+    if errorlevel 1 (
+        echo ❌ PyInstaller installatie faalde
+        pause
+        exit /b 1
+    )
+)
+echo [OK] Dependencies OK
+echo.
+
+rem ---- .spec bestand maken indien niet aanwezig ----
+if not exist "%SPEC_FILE%" (
+    echo [5] .spec bestand aanmaken...
+    
+    "%PYEXE%" -c "import sys; print(sys.executable)" > "%TEMP%\\pypath.txt"
+    set /p PYTHON_PATH=<"%TEMP%\\pypath.txt"
+    del /q "%TEMP%\\pypath.txt"
+    
+    > "%SPEC_FILE%" echo # -*- mode: python ; coding: utf-8 -*-
+    >>"%SPEC_FILE%" echo.
+    >>"%SPEC_FILE%" echo block_cipher = None
+    >>"%SPEC_FILE%" echo.
+    >>"%SPEC_FILE%" echo a = Analysis(
+    >>"%SPEC_FILE%" echo     ['app/main.py'],
+    >>"%SPEC_FILE%" echo     pathex=[],
+    >>"%SPEC_FILE%" echo     binaries=[],
+    >>"%SPEC_FILE%" echo     datas=[
+    >>"%SPEC_FILE%" echo         ('assets', 'assets'),
+    >>"%SPEC_FILE%" echo         ('config', 'config'),
+    >>"%SPEC_FILE%" echo         ('css', 'css'),
+    >>"%SPEC_FILE%" echo         ('i18n/locales/*.json', 'i18n/locales'),
+    >>"%SPEC_FILE%" echo     ],
+    >>"%SPEC_FILE%" echo     hiddenimports=[],
+    >>"%SPEC_FILE%" echo     hookspath=[],
+    >>"%SPEC_FILE%" echo     hooksconfig={{}},
+    >>"%SPEC_FILE%" echo     runtime_hooks=[],
+    >>"%SPEC_FILE%" echo     excludes=[],
+    >>"%SPEC_FILE%" echo     win_no_prefer_redirects=False,
+    >>"%SPEC_FILE%" echo     win_private_assemblies=False,
+    >>"%SPEC_FILE%" echo     cipher=block_cipher,
+    >>"%SPEC_FILE%" echo     noarchive=False,
+    >>"%SPEC_FILE%" echo ^)
+    >>"%SPEC_FILE%" echo.
+    >>"%SPEC_FILE%" echo pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher^)
+    >>"%SPEC_FILE%" echo.
+    >>"%SPEC_FILE%" echo exe = EXE(
+    >>"%SPEC_FILE%" echo     pyz,
+    >>"%SPEC_FILE%" echo     a.scripts,
+    >>"%SPEC_FILE%" echo     a.binaries,
+    >>"%SPEC_FILE%" echo     a.zipfiles,
+    >>"%SPEC_FILE%" echo     a.datas,
+    >>"%SPEC_FILE%" echo     [],
+    >>"%SPEC_FILE%" echo     name='%PROJECT_NAME%',
+    >>"%SPEC_FILE%" echo     debug=False,
+    >>"%SPEC_FILE%" echo     bootloader_ignore_signals=False,
+    >>"%SPEC_FILE%" echo     strip=False,
+    >>"%SPEC_FILE%" echo     upx=True,
+    >>"%SPEC_FILE%" echo     upx_exclude=[],
+    >>"%SPEC_FILE%" echo     runtime_tmpdir=None,
+    >>"%SPEC_FILE%" echo     console=False,
+    >>"%SPEC_FILE%" echo     disable_windowed_traceback=False,
+    >>"%SPEC_FILE%" echo     argv_emulation=False,
+    >>"%SPEC_FILE%" echo     target_arch=None,
+    >>"%SPEC_FILE%" echo     codesign_identity=None,
+    >>"%SPEC_FILE%" echo     entitlements_file=None,
+    >>"%SPEC_FILE%" echo ^)
+    
+    echo [OK] .spec bestand aangemaakt
+    echo.
+)
+
+rem ---- PyInstaller Build ----
+echo [5] PyInstaller build...
+echo Dit kan enkele minuten duren...
+echo.
+
+"%PYEXE%" -m PyInstaller --clean --noconfirm "%SPEC_FILE%"
+if errorlevel 1 (
+    echo.
+    echo ❌ ERROR: Build faalde!
+    echo.
+    pause
+    exit /b 1
+)
+
+if not exist "%DST_FOLDER%\\%PROJECT_NAME%\\%PROJECT_NAME%.exe" (
+    echo.
+    echo ❌ ERROR: .exe niet gevonden
+    echo.
+    pause
+    exit /b 1
+)
+
+echo [OK] Build succesvol!
+echo.
+
+rem ---- Hernoemen met versie ----
+echo [6] Folder hernoemen...
+
+set "BUILD_FOLDER=%PROJECT_NAME%_%APP_VERSION%"
+
+if exist "%DST_FOLDER%\\%BUILD_FOLDER%" rmdir /s /q "%DST_FOLDER%\\%BUILD_FOLDER%" >nul 2>&1
+
+rename "%DST_FOLDER%\\%PROJECT_NAME%" "%BUILD_FOLDER%" >nul 2>&1
+if errorlevel 1 (
+    robocopy "%DST_FOLDER%\\%PROJECT_NAME%" "%DST_FOLDER%\\%BUILD_FOLDER%" /E /MOVE /NFL /NDL /NJH /NJS >nul
+    if errorlevel 8 (
+        echo ❌ Hernoemen faalde
+        pause
+        exit /b 1
+    )
+)
+
+echo [OK] Folder: %BUILD_FOLDER%
+echo.
+
+rem ---- Version.txt ----
+> "%DST_FOLDER%\\%BUILD_FOLDER%\\version.txt" echo %APP_VERSION%
+
+rem ---- Resultaat ----
+echo.
+echo ========================================
+echo  BUILD SUCCESVOL!
+echo ========================================
+echo.
+echo 📌 Versie: %APP_VERSION%
+echo 📂 Folder: %DST_FOLDER%\\%BUILD_FOLDER%
+echo 💻 EXE: %DST_FOLDER%\\%BUILD_FOLDER%\\%PROJECT_NAME%.exe
+echo.
+echo ✅ Klaar om te testen!
+echo.
+
+set /p OPEN_FOLDER=Output folder openen? [J/N] : 
+if /I "%OPEN_FOLDER%"=="J" explorer "%DST_FOLDER%\\%BUILD_FOLDER%"
+
+pause
+endlocal
+'''
+
+
+def get_build_readme_template(app_name: str) -> str:
+    """Template voor BUILD.md documentatie."""
+    package_name = app_name.replace(' ', '_')
+    
+    return f'''# Build Instructies - {app_name}
+
+## 🚀 Quick Start
+
+```bash
+venv\\Scripts\\activate
+build.bat
+```
+
+## Output
+
+```
+dist/{package_name}_1.0.0/
+└── {package_name}.exe
+```
+
+## Troubleshooting
+
+### Python niet gevonden
+```bash
+python --version
+venv\\Scripts\\activate
+```
+
+### Build faalde
+```bash
+pip install -r requirements.txt
+pip install pyinstaller
+build.bat
+```
+
+## Meer Info
+
+- [PyInstaller Docs](https://pyinstaller.org)
+- Scripts: `scripts/README.md`
+'''
+
+
+# ===== MAIN TEMPLATE FUNCTION =====
+
+def create_standard_project_template(name: str, version: str, author: str, 
+                                     description: str = "", create_venv: bool = False,
+                                     root_path: Path = None) -> ProjectTemplate:
+    """
+    Creëer de standaard projectstructuur.
+    
+    Versie 1.0.6: Toegevoegd build.bat en BUILD.md templates
+    """
+    project = ProjectTemplate(
+        name=name,
+        version=version,
+        author=author,
+        description=description,
+        create_venv=create_venv
+    )
+    
+    # .vscode folder
+    vscode_folder = FolderTemplate(name=".vscode")
+    vscode_folder.add_file("launch.json", "VS Code debug configuratie", get_launch_json_template(name))
+    vscode_folder.add_file("settings.json", "VS Code Python settings", get_settings_json_template())
+    
+    # app folder
+    app_folder = FolderTemplate(name="app", python_package=True)
+    app_folder.add_file("main.py", "Hoofdapplicatie", get_main_py_template())
+    app_folder.add_file("version.py", "Versie informatie", get_version_py_template(version))
+    
+    # config folder
+    config_folder = FolderTemplate(name="config")
+    config_folder.add_file("settings.json", "Applicatie configuratie", get_settings_config_template())
+    
+    # assets folder
+    assets_folder = FolderTemplate(name="assets")
+    icons_subfolder = FolderTemplate(name="icons")
+    assets_folder.add_subfolder(icons_subfolder)
+    
+    # css folder
+    css_folder = FolderTemplate(name="css")
+    css_folder.add_file("main.qss", "Hoofd stylesheet", get_main_qss_template())
+    css_folder.add_file("detail.qss", "Detail window stylesheet", get_detail_qss_template())
+    
+    # data folder
+    data_folder = FolderTemplate(name="data")
+    data_folder.add_file(".gitkeep", "Bewaar deze map in git", get_gitkeep_template())
+    
+    # docs folder
+    docs_folder = FolderTemplate(name="docs")
+    docs_folder.add_file("changelog.md", "Versiegeschiedenis", get_changelog_template(version))
+    
+    # helpers folder
+    helpers_folder = FolderTemplate(name="helpers", python_package=True)
+    
+    # utils folder
+    utils_folder = FolderTemplate(name="utils", python_package=True)
+    
+    # md folder
+    md_folder = FolderTemplate(name="md")
+    md_folder.add_file("help.md", "Help documentatie", get_help_md_template(name))
+    
+    # tests folder
+    tests_folder = FolderTemplate(name="tests", python_package=True)
+    
+    # scripts folder
+    scripts_folder = FolderTemplate(name="scripts")
+    scripts_folder.add_file("README.md", "Scripts documentatie", get_scripts_readme_template())
+    scripts_folder.add_file("update_toml.py", "Update pyproject.toml", get_update_toml_script())
+    scripts_folder.add_file("bump_version.py", "Verhoog versie", get_bump_version_script())
+    scripts_folder.add_file("generate_requirements.py", "Genereer requirements.txt", get_generate_requirements_script())
+    scripts_folder.add_file("validate_project.py", "Valideer project", get_validate_project_script())
+    
+    # i18n folder
+    i18n_folder = FolderTemplate(name="i18n", python_package=False)
+    i18n_folder.add_file("__init__.py", "i18n package init", get_i18n_init_template())
+    i18n_folder.add_file("translator.py", "Translation helper", get_translator_py_template())
+    i18n_folder.add_file("README.md", "i18n documentatie", get_i18n_readme_template())
+    
+    locales_folder = FolderTemplate(name="locales")
+    locales_folder.add_file("nl_NL.json", "Nederlandse vertalingen", get_locale_nl_nl_template())
+    locales_folder.add_file("en_US.json", "English translations", get_locale_en_us_template())
+    i18n_folder.add_subfolder(locales_folder)
+    
+    # Voeg alle folders toe
+    project.add_folder(vscode_folder)
+    project.add_folder(app_folder)
+    project.add_folder(config_folder)
+    project.add_folder(assets_folder)
+    project.add_folder(css_folder)
+    project.add_folder(data_folder)
+    project.add_folder(docs_folder)
+    project.add_folder(helpers_folder)
+    project.add_folder(utils_folder)
+    project.add_folder(md_folder)
+    project.add_folder(scripts_folder)
+    project.add_folder(i18n_folder)
+    project.add_folder(tests_folder)
+    
+    # Root files - Basis
+    project.add_file("README.md", "Project documentatie", get_readme_template(name, version, author, description))
+    project.add_file("requirements.txt", "Python dependencies", get_requirements_txt_template())
+    project.add_file(".gitignore", "Git ignore regels", get_gitignore_template())
+    
+    # Root files - Modern Python packaging
+    project.add_file("pyproject.toml", "Project configuratie (PEP 621)", get_pyproject_toml_template(name, version, author, description))
+    project.add_file("setup.py", "Setup script (backwards compatibility)", get_setup_py_template(name, version, author, description))
+    project.add_file("MANIFEST.in", "Package manifest", get_manifest_in_template())
+    
+    # Root files - Documentatie
+    project.add_file("LICENSE", "MIT License", get_license_template(author))
+    project.add_file("CONTRIBUTING.md", "Contributie richtlijnen", get_contributing_template(name))
+    
+    # Root files - Development tools
+    project.add_file("Makefile", "Development shortcuts", get_makefile_template(name))
+    
+    # ===== BUILD SYSTEEM (v1.0.6) =====
+    project.add_file("build.bat", "Build script voor Windows executable", get_build_bat_template(name, version))
+    project.add_file("BUILD.md", "Build documentatie en troubleshooting", get_build_readme_template(name))
+    
+    return project

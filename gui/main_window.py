@@ -1,10 +1,36 @@
 """
-gui/main_window.py
-
-Beschrijving: Hoofdvenster met wizard interface
+File:    /gui/main_window.py
+Rol:     Hoofdvenster met wizard interface
 Applicatie: Project Generator
-Versie: 1.0.5
-Auteur: Barremans
+Versie:  1.1.0
+Auteur:  Barremans
+Changes: 1.1.0 - NIEUW: "Tools"-menu toegevoegd (tussen Taal en Help, in
+                  zowel _setup_menu() als _rebuild_menu() — anders verdwijnt
+                  het na een taalwisseling) met actie "Headers & Structuur..."
+                  die gui/tools_dialog.py::ToolsDialog opent (project-doc-
+                  tool-samenvoeging, zie context_ProjectDocTool.md §7.4).
+                  Indien er al een gegenereerd project is in deze sessie
+                  (self.generated_project_path), wordt de dialoog daarmee
+                  voorgevuld. LET OP: de i18n-keys "menu.tools" en
+                  "menu.tools.headers_structuur" bestaan nog NIET in
+                  i18n/locales/*.json — die heb ik niet kunnen aanpassen
+                  (niet aangeleverd). Tot ze zijn toegevoegd valt t() naar
+                  ongeacht welk fallback-gedrag i18n/translator.py toepast
+                  bij een ontbrekende key (bv. de key zelf tonen). Zie
+                  toelichting in de chat voor de voorgestelde NL/EN-teksten.
+Changes: 1.0.7 - Structuur-overzicht in wizard-stap 3 (_create_options_page)
+                  aangevuld met ui/, dialogs/ en token/ — nieuw toegevoegd
+                  aan core/default_templates.py v1.0.7. Puur informatief,
+                  geen functionele wijziging.
+Changes: 1.0.6 - BUGFIX: GeneratorThread.run() emitte in zowel de
+                  succes- als de faal-tak "finished.emit(True, ...)" —
+                  een mislukte generatie (generator.errors gevuld) werd
+                  hierdoor in de UI altijd als geslaagd getoond, en de
+                  bestaande foutafhandeling in _on_finished() (het
+                  QMessageBox.critical-pad) werd nooit bereikt. Faal-tak
+                  emit nu correct "False" met de verzamelde
+                  generator.errors als boodschap.
+Changes: 1.0.5 - Baseline (voorheen ongedocumenteerd).
 """
 
 from PyQt6.QtWidgets import (
@@ -25,6 +51,7 @@ from core.default_templates import create_standard_project_template
 from core.generator import ProjectGenerator
 from utils.settings import AppSettings
 from gui.settings_dialog import SettingsDialog
+from gui.tools_dialog import ToolsDialog
 from i18n import get_translator, t
 
 
@@ -55,8 +82,12 @@ class GeneratorThread(QThread):
                 msg = t("wizard.step6.title")
                 self.finished.emit(True, msg, project_path)
             else:
-                msg = t("wizard.step6.title")
-                self.finished.emit(True, msg, project_path)
+                # BUGFIX (was: self.finished.emit(True, ...) in beide takken,
+                # waardoor een mislukte generatie in de UI als succes
+                # verscheen). generator.errors is gevuld door
+                # ProjectGenerator bij elke stap die faalde.
+                msg = "\n".join(generator.errors) if generator.errors else "Onbekende fout tijdens generatie."
+                self.finished.emit(False, msg, project_path)
                 
         except Exception as e:
             self.finished.emit(False, f"Error: {str(e)}", "")
@@ -148,6 +179,13 @@ class ProjectGeneratorWindow(QMainWindow):
         en_action.triggered.connect(lambda: self._change_language("en_US"))
         lang_menu.addAction(en_action)
         
+        # Tools menu
+        tools_menu = menubar.addMenu(t("menu.tools"))
+        
+        headers_structure_action = QAction(t("menu.tools.headers_structuur"), self)
+        headers_structure_action.triggered.connect(self._open_tools_dialog)
+        tools_menu.addAction(headers_structure_action)
+        
         # Help menu
         help_menu = menubar.addMenu(t("menu.help"))
         
@@ -203,6 +241,13 @@ class ProjectGeneratorWindow(QMainWindow):
         en_action = QAction("🇬🇧 English", self)
         en_action.triggered.connect(lambda: self._change_language("en_US"))
         lang_menu.addAction(en_action)
+        
+        # Tools menu
+        tools_menu = self.menuBar().addMenu(t("menu.tools"))
+        
+        headers_structure_action = QAction(t("menu.tools.headers_structuur"), self)
+        headers_structure_action.triggered.connect(self._open_tools_dialog)
+        tools_menu.addAction(headers_structure_action)
         
         # Help menu
         help_menu = self.menuBar().addMenu(t("menu.help"))
@@ -414,6 +459,9 @@ class ProjectGeneratorWindow(QMainWindow):
             "• helpers/ (Helper functies)\n"
             "• i18n/ (Internationalization)\n"
             "• utils/ (Utilities)\n"
+            "• ui/ (GUI-schermen)\n"
+            "• dialogs/ (Modale vensters)\n"
+            "• token/ (Token/auth-modules)\n"
             "• md/ (Markdown bestanden)\n"
             "• tests/ (Unit tests)\n"
             "• README.md, requirements.txt, .gitignore\n"
@@ -836,6 +884,22 @@ class ProjectGeneratorWindow(QMainWindow):
                 self.translator.set_locale(self.settings.locale)
                 self._refresh_ui()
     
+    def _open_tools_dialog(self):
+        """
+        Opent de Tools-dialoog (headers controleren/toevoegen +
+        PROJECT_STRUCTURE.md genereren) — geporte project-doc-tool-
+        functionaliteit, zie gui/tools_dialog.py.
+
+        Als er in deze sessie al een project gegenereerd is
+        (self.generated_project_path), wordt de dialoog daarmee voorgevuld
+        zodat je meteen tegen dat project kan werken.
+        """
+        initial_path = (
+            Path(self.generated_project_path) if self.generated_project_path else None
+        )
+        dialog = ToolsDialog(self, initial_path=initial_path)
+        dialog.exec()
+
     def _show_help(self):
         """Toon help."""
         # Bepaal welk bestand op basis van huidige taal

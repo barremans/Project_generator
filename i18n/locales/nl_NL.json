@@ -68,6 +68,9 @@
     
     "menu.language": "Taal",
     
+    "menu.tools": "Tools",
+    "menu.tools.headers_structuur": "Headers && Structuur...",
+    
     "settings.title": "Instellingen",
     "settings.defaults": "Standaard Waarden",
     "settings.default_author": "Standaard Auteur:",

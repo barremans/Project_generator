@@ -1,10 +1,18 @@
 """
-core/header_renderer.py
-
-Beschrijving: Genereert headers per bestandsextensie
-Applicatie: Project Generator
-Versie: 1.0.0
-Auteur: Barremans
+File:    /core/header_renderer.py
+Rol:     Genereert headers per bestandsextensie
+Versie:  1.1.0
+Auteur:  Barremans
+Changes: 1.1.0 - Headerformaat aangepast naar de vaste CGK-conventie:
+                  toegevoegd "File:"-label (i.p.v. het kale pad op de
+                  eerste regel), "Rol:"-veld toegevoegd (i.p.v.
+                  "Beschrijving:"), en een "Changes:"-regel met
+                  "1.0.0 - Baseline." toegevoegd zodat elk gegenereerd
+                  bestand vanaf de start een changelog-spoor heeft. Het
+                  binnenkomende pad wordt nu ongewijzigd doorgegeven
+                  (context.get_relative_path() levert intussen zelf al
+                  het leidende "/").
+Changes: 1.0.0 - Baseline.
 """
 
 from typing import Dict, Callable
@@ -41,8 +49,8 @@ class HeaderRenderer:
         Genereer header voor een bestand.
         
         Args:
-            relative_path: Relatief pad (bijv. "app/main.py")
-            description: Optionele beschrijving
+            relative_path: Relatief pad, mét leidend "/" (bijv. "/app/main.py")
+            description: Optionele beschrijving (wordt gebruikt als "Rol:")
             
         Returns:
             Volledige header als string
@@ -61,12 +69,12 @@ class HeaderRenderer:
     def _render_python(self, path: str, desc: str) -> str:
         """Python docstring header."""
         return f'''"""
-{path}
-
-Beschrijving: {desc}
+File:    {path}
+Rol:     {desc}
 Applicatie: {self.context.app_name}
-Versie: {self.context.version}
-Auteur: {self.context.author}
+Versie:  {self.context.version}
+Auteur:  {self.context.author}
+Changes: {self.context.version} - Baseline.
 """
 
 '''
@@ -78,36 +86,36 @@ Auteur: {self.context.author}
     def _render_markdown(self, path: str, desc: str) -> str:
         """Markdown HTML comment."""
         return f'''<!--
-{path}
-
-Beschrijving: {desc}
+File:    {path}
+Rol:     {desc}
 Applicatie: {self.context.app_name}
-Versie: {self.context.version}
-Auteur: {self.context.author}
+Versie:  {self.context.version}
+Auteur:  {self.context.author}
+Changes: {self.context.version} - Baseline.
 -->
 
 '''
     
     def _render_txt(self, path: str, desc: str) -> str:
         """Tekstbestand met # comments."""
-        return f'''# {path}
-#
-# Beschrijving: {desc}
+        return f'''# File:    {path}
+# Rol:     {desc}
 # Applicatie: {self.context.app_name}
-# Versie: {self.context.version}
-# Auteur: {self.context.author}
+# Versie:  {self.context.version}
+# Auteur:  {self.context.author}
+# Changes: {self.context.version} - Baseline.
 
 '''
     
     def _render_bat(self, path: str, desc: str) -> str:
         """Batch bestand met REM header."""
         return f'''REM ============================================================
-REM {path}
-REM 
-REM Beschrijving: {desc}
+REM File:    {path}
+REM Rol:     {desc}
 REM Applicatie: {self.context.app_name}
-REM Versie: {self.context.version}
-REM Auteur: {self.context.author}
+REM Versie:  {self.context.version}
+REM Auteur:  {self.context.author}
+REM Changes: {self.context.version} - Baseline.
 REM ============================================================
 
 '''
@@ -115,24 +123,24 @@ REM ============================================================
     def _render_spec(self, path: str, desc: str) -> str:
         """PyInstaller spec bestand."""
         return f'''# -*- mode: python ; coding: utf-8 -*-
-# {path}
-#
-# Beschrijving: {desc}
+# File:    {path}
+# Rol:     {desc}
 # Applicatie: {self.context.app_name}
-# Versie: {self.context.version}
-# Auteur: {self.context.author}
+# Versie:  {self.context.version}
+# Auteur:  {self.context.author}
+# Changes: {self.context.version} - Baseline.
 
 '''
     
     def _render_qss(self, path: str, desc: str) -> str:
         """Qt StyleSheet - CSS-style comments."""
         return f'''/*
-{path}
-
-Beschrijving: {desc}
+File:    {path}
+Rol:     {desc}
 Applicatie: {self.context.app_name}
-Versie: {self.context.version}
-Auteur: {self.context.author}
+Versie:  {self.context.version}
+Auteur:  {self.context.author}
+Changes: {self.context.version} - Baseline.
 */
 
 '''
@@ -143,10 +151,11 @@ Auteur: {self.context.author}
     
     def _render_default(self, path: str, desc: str) -> str:
         """Fallback: hash comments."""
-        return f'''# {path}
-# Beschrijving: {desc}
+        return f'''# File:    {path}
+# Rol:     {desc}
 # Applicatie: {self.context.app_name}
-# Versie: {self.context.version}
-# Auteur: {self.context.author}
+# Versie:  {self.context.version}
+# Auteur:  {self.context.author}
+# Changes: {self.context.version} - Baseline.
 
 '''

@@ -1,10 +1,16 @@
 """
-core/context.py
-
-Beschrijving: Project context en metadata
-Applicatie: Project Generator
-Versie: 1.0.0
-Auteur: Barremans
+File:    /core/context.py
+Rol:     Project context en metadata
+Versie:  1.0.1
+Auteur:  Barremans
+Changes: 1.0.1 - BUGFIX: venv_path gebruikte "venv" i.p.v. ".venv" — nu
+                  consistent met de CGK-conventie dat elke nieuwe app een
+                  eigen ".venv" krijgt. get_relative_path() geeft het pad
+                  nu met een leidend "/" terug (bv. "/app/main.py" i.p.v.
+                  "app/main.py"), conform de headerconventie (het "File:"
+                  -veld moet het pad relatief t.o.v. de project root tonen
+                  mét leidende "/").
+Changes: 1.0.0 - Baseline.
 """
 
 from dataclasses import dataclass
@@ -47,15 +53,16 @@ class ProjectContext:
     
     @property
     def venv_path(self) -> Path:
-        """Pad naar virtuele omgeving."""
-        return self.project_root / "venv"
+        """Pad naar virtuele omgeving (".venv", conform CGK-conventie)."""
+        return self.project_root / ".venv"
     
     def get_relative_path(self, file_path: Path) -> str:
         """
-        Geef relatief pad t.o.v. project root.
-        Gebruikt voor headers.
+        Geef relatief pad t.o.v. project root, met leidend "/".
+        Gebruikt voor headers (bv. "/app/main.py").
         """
         try:
-            return str(file_path.relative_to(self.project_root))
+            relative = file_path.relative_to(self.project_root)
+            return "/" + str(relative).replace("\\", "/")
         except ValueError:
             return str(file_path)

@@ -1,0 +1,19 @@
+{
+  "owner": "barremans",
+  "repo": "Project_generator",
+  "project_root": "C:\\PY\\Project_generator",
+  "build_dirs": [
+    "C:\\PY\\Project_generator\\dist",
+    "C:\\PY\\Project_generator\\dist\\dist"
+  ],
+  "staging_dir": "C:\\releases\\Project_generator\\latest",
+  "repo_clone": "C:\\PY\\Project_generator",
+  "exe_pattern": "Project_Generator_Setup_*.exe",
+  "version_path": "app/version.py",
+  "signing": {
+    "enabled": true,
+    "signtool_path": "C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.19041.0\\x64\\signtool.exe",
+    "pfx_path": "C:\\certs\\cgk_local_signing.pfx",
+    "timestamp_url": "http://timestamp.sectigo.com"
+  }
+}

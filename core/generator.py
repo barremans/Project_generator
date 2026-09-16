@@ -1,10 +1,25 @@
 """
-core/generator.py
-
-Beschrijving: Projectgenerator - creëert volledige projectstructuur
+File:    /core/generator.py
+Rol:     Projectgenerator - creëert volledige projectstructuur
 Applicatie: Project Generator
-Versie: 1.0.3
-Auteur: Barremans
+Versie:  1.1.0
+Auteur:  Barremans
+Changes: 1.1.0 - NIEUW stap 9: genereert automatisch PROJECT_STRUCTURE.md
+                  in docs/ na afloop van de generatie, via het geporte
+                  core/generate_index.py (project-doc-tool-samenvoeging,
+                  zie context_ProjectDocTool.md §7.4). Niet-fataal bij
+                  fout (zelfde patroon als icons/export/spec-stappen).
+Changes: 1.0.5 - export_to_usb.bat-template upgradet naar dezelfde robuuste
+                  .venv/venv-detectielogica als ArticleSearch's bewezen
+                  export_to_usb5.bat: detecteert welke van beide bestaat
+                  (voorkeur .venv), en kopieert de gevonden omgeving onder
+                  haar eigen naam i.p.v. altijd hardcoded ".venv".
+Changes: 1.0.4 - BUGFIX: het ingebakken export_to_usb.bat-template
+                  (_get_export_script_template) verwees naar "venv" i.p.v.
+                  ".venv" bij het bepalen van VENV_PATH en bij het kopiëren
+                  van de virtuele omgeving naar de USB-doelmap — nu
+                  consistent met context.py/venv_helper.py.
+Changes: 1.0.3 - Baseline (voorheen ongedocumenteerd).
 """
 
 from pathlib import Path
@@ -16,6 +31,7 @@ import shutil
 from core.context import ProjectContext
 from core.templates import ProjectTemplate, FolderTemplate, FileTemplate
 from core.header_renderer import HeaderRenderer
+from core.generate_index import generate_project_structure
 from utils.filesystem import (
     ensure_directory, 
     write_file, 
@@ -80,6 +96,10 @@ class ProjectGenerator:
         # Stap 8: Spec file toevoegen
         if not self._add_spec_file():
             print("⚠️  Waarschuwing: Spec file niet toegevoegd")
+        
+        # Stap 9: Projectstructuur genereren (docs/PROJECT_STRUCTURE.md)
+        if not self._generate_project_structure():
+            print("⚠️  Waarschuwing: PROJECT_STRUCTURE.md niet gegenereerd")
         
         # Resultaat
         self._print_summary()
@@ -365,6 +385,25 @@ class ProjectGenerator:
         self.errors.append("Kon spec file niet aanmaken")
         return False
     
+    def _generate_project_structure(self) -> bool:
+        """
+        Genereert docs/PROJECT_STRUCTURE.md voor het zojuist aangemaakte
+        project (geporte project-doc-tool-functionaliteit, zie
+        core/generate_index.py). Niet-fataal: het project blijft bruikbaar
+        als dit mislukt.
+        """
+        print("📑 Projectstructuur genereren (docs/PROJECT_STRUCTURE.md)...")
+        
+        try:
+            output_file = generate_project_structure(self.context.project_root)
+            self.created_files.append(output_file)
+            print(f"✅ PROJECT_STRUCTURE.md aangemaakt: {output_file}")
+            return True
+        except Exception as e:
+            self.errors.append(f"Fout bij genereren PROJECT_STRUCTURE.md: {str(e)}")
+            print(f"❌ Fout bij genereren PROJECT_STRUCTURE.md: {str(e)}")
+            return False
+    
     def _get_export_script_template(self) -> str:
         """Template voor export_to_usb.bat - Volledige versie."""
         header = self.header_renderer.render("export_to_usb.bat", "Export script naar USB")
@@ -411,8 +450,18 @@ if "%SOURCE_FOLDER:~-1%"=="\\" set "SOURCE_FOLDER=%SOURCE_FOLDER:~0,-1%"
 
 echo [OK] Bronmap: "%SOURCE_FOLDER%"
 
-:: === 2) Venv pad bepalen (standaard .\\venv onder bron) ===
-set "VENV_PATH=%SOURCE_FOLDER%\\venv"
+:: === 2) Venv pad bepalen (voorkeur .venv, fallback venv) ===
+set "DOT_VENV_PATH=%SOURCE_FOLDER%\\.venv"
+set "VENV_NORMAL_PATH=%SOURCE_FOLDER%\\venv"
+set "VENV_PATH="
+set "VENV_NAME="
+if exist "%DOT_VENV_PATH%\\Scripts\\python.exe" (
+    set "VENV_PATH=%DOT_VENV_PATH%"
+    set "VENV_NAME=.venv"
+) else if exist "%VENV_NORMAL_PATH%\\Scripts\\python.exe" (
+    set "VENV_PATH=%VENV_NORMAL_PATH%"
+    set "VENV_NAME=venv"
+)
 
 :: === 3) USB-station vragen ===
 :ASK_USB
@@ -498,7 +547,7 @@ if exist "%VENV_PATH%" (
         echo [INFO] Venv kopiëren overgeslagen.
     ) else (
         echo [2] Kopiëren van virtuele omgeving...
-        robocopy "%VENV_PATH%" "%USB_FOLDER%\\venv" /E /ETA /FP
+        robocopy "%VENV_PATH%" "%USB_FOLDER%\\%VENV_NAME%" /E /ETA /FP
         set "RCV=%ERRORLEVEL%"
         if %RCV% GEQ 8 (
             echo [WAARSCHUWING] Fout bij kopiëren venv (RC=%RCV%).

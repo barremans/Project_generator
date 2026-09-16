@@ -1,51 +1,10 @@
 """
-File:    /core/default_templates.py
-Rol:     Standaard project templates
+core/default_templates.py
+
+Beschrijving: Standaard project templates
 Applicatie: Project Generator
-Versie:  1.0.9
-Auteur:  Barremans
-Changes: 1.0.9 - NIEUW: core/-map (Python package) toegevoegd aan
-                  create_standard_project_template(), naar analogie van
-                  helpers/utils/ui/dialogs/token (python_package=True →
-                  generator.py's _generate_folder() maakt automatisch de
-                  __init__.py aan met header). Bedoeld voor kernlogica/
-                  gedeelde functionaliteit, los van app/ — zie
-                  context_ProjectGenerator.md §7 en de CGK-conventie
-                  app/core/ uit 01-app-structuur-template.md. Geen wijziging
-                  nodig aan generator.py of templates.py: python_package
-                  wordt al generiek afgehandeld.
-Changes: 1.0.8 - BUGFIX: 7 template-functies (setup.py, scripts/update_toml.py,
-                  scripts/bump_version.py, scripts/generate_requirements.py,
-                  scripts/validate_project.py, i18n/translator.py,
-                  i18n/__init__.py) bakten zelf al een verouderd
-                  "Beschrijving:/Versie:"-docstring-blok in hun
-                  template_body — gecombineerd met de header die
-                  HeaderRenderer er al voor plakt, kreeg elk van deze
-                  bestanden een DUBBELE header. Alle 7 verouderde blokken
-                  verwijderd. Bijkomend: get_i18n_init_template() bestond al
-                  langer maar werd nergens aangeroepen (dode code) — i18n/
-                  kreeg hierdoor enkel een lege package-__init__.py in
-                  plaats van de bedoelde "from i18n.translator import
-                  Translator, get_translator, t"-herexport. Nu wél
-                  toegevoegd aan create_standard_project_template().
-                  Verder: drie nieuwe root-bestanden toegevoegd naar het
-                  bewezen ArticleSearch build/release-patroon —
-                  build_installer.bat (PyInstaller + Intune-veilige Inno
-                  Setup-installer, met per-app uniek gegenereerde AppGuid),
-                  build_and_publish.ps1 (orchestrator) en publish.ps1
-                  (GitHub-release via 'gh' + version.txt), telkens werkend
-                  op app/version.py en met dynamische root-resolutie.
-Changes: 1.0.7 - create_standard_project_template() breidt uit met drie
-                  extra lege Python-packages: ui/ (GUI-schermen, naar
-                  ArticleSearch-conventie ui_*.py), dialogs/ (modale
-                  QDialog-vensters, *_dialog.py) en token/ (per-domein
-                  token/auth-modules, *_token.py).
-Changes: 1.0.6 - BUGFIX: get_launch_json_template() en
-                  get_settings_json_template() verwezen naar
-                  "venv/Scripts/python.exe" i.p.v. ".venv/Scripts/python.exe".
-Changes: 1.0.5 - (voorheen ongedocumenteerd) i18n-map met locales
-                  (nl_NL/en_US/fr_FR/de_DE/es_ES) toegevoegd aan
-                  create_standard_project_template().
+Versie: 1.0.5
+Auteur: Barremans
 """
 
 from pathlib import Path
@@ -71,7 +30,7 @@ if __name__ == "__main__":
 
 def get_launch_json_template(app_name: str) -> str:
     """Template voor .vscode/launch.json."""
-    python_path = "${workspaceFolder}/.venv/Scripts/python.exe"
+    python_path = "${workspaceFolder}/venv/Scripts/python.exe"
     
     return f'''{{
     "version": "0.2.0",
@@ -91,7 +50,7 @@ def get_launch_json_template(app_name: str) -> str:
 
 def get_settings_json_template() -> str:
     """Template voor .vscode/settings.json."""
-    python_path = "${workspaceFolder}/.venv/Scripts/python.exe"
+    python_path = "${workspaceFolder}/venv/Scripts/python.exe"
     
     return f'''{{
     "python.defaultInterpreterPath": "{python_path}",
@@ -535,8 +494,17 @@ def get_setup_py_template(app_name: str, version: str, author: str, description:
     desc = description if description else "Een Python applicatie"
     package_name = app_name.lower().replace(' ', '-')
     
-    return f'''# Note: Dit bestand is voor backwards compatibility.
-# De primaire configuratie staat in pyproject.toml
+    return f'''"""
+setup.py
+
+Beschrijving: Package setup (backwards compatibility)
+Applicatie: {app_name}
+Versie: {version}
+Auteur: {author}
+
+Note: Dit bestand is voor backwards compatibility.
+De primaire configuratie staat in pyproject.toml
+"""
 
 from setuptools import setup, find_packages
 from pathlib import Path
@@ -1273,7 +1241,14 @@ Run met admin rechten (Windows) of sudo (Linux)
 
 def get_update_toml_script() -> str:
     """Template voor scripts/update_toml.py."""
-    return '''import argparse
+    return '''"""
+scripts/update_toml.py
+
+Beschrijving: Update pyproject.toml automatisch
+Versie: 1.0.5
+"""
+
+import argparse
 import sys
 from pathlib import Path
 import shutil
@@ -1377,7 +1352,14 @@ if __name__ == "__main__":
 
 def get_bump_version_script() -> str:
     """Template voor scripts/bump_version.py."""
-    return r'''import argparse
+    return r'''"""
+scripts/bump_version.py
+
+Beschrijving: Verhoog versienummer overal in het project
+Versie: 1.0.5
+"""
+
+import argparse
 import re
 import sys
 from pathlib import Path
@@ -1582,7 +1564,14 @@ if __name__ == "__main__":
 
 def get_generate_requirements_script() -> str:
     """Template voor scripts/generate_requirements.py."""
-    return '''import argparse
+    return '''"""
+scripts/generate_requirements.py
+
+Beschrijving: Genereer requirements.txt uit pyproject.toml
+Versie: 1.0.5
+"""
+
+import argparse
 import sys
 from pathlib import Path
 
@@ -1662,7 +1651,14 @@ if __name__ == "__main__":
 
 def get_validate_project_script() -> str:
     """Template voor scripts/validate_project.py."""
-    return '''import sys
+    return '''"""
+scripts/validate_project.py
+
+Beschrijving: Valideer project structuur en configuratie
+Versie: 1.0.5
+"""
+
+import sys
 from pathlib import Path
 import subprocess
 
@@ -1838,7 +1834,14 @@ if __name__ == "__main__":
 
 def get_translator_py_template() -> str:
     """Template voor i18n/translator.py."""
-    return '''import json
+    return '''"""
+i18n/translator.py
+
+Beschrijving: Translation helper voor meertalige applicaties
+Versie: 1.0.5
+"""
+
+import json
 from pathlib import Path
 from typing import Dict, Optional
 
@@ -1987,7 +1990,14 @@ def t(key: str, **kwargs) -> str:
 
 def get_i18n_init_template() -> str:
     """Template voor i18n/__init__.py."""
-    return '''from i18n.translator import Translator, get_translator, t
+    return '''"""
+i18n/__init__.py
+
+Beschrijving: Internationalization (i18n) package
+Versie: 1.0.5
+"""
+
+from i18n.translator import Translator, get_translator, t
 
 __all__ = ["Translator", "get_translator", "t"]
 '''
@@ -2400,469 +2410,6 @@ t("app.greeting")  # "Hallo, {name}!" (variabele niet replaced)
 '''
 
 
-# ===== BUILD & RELEASE TEMPLATES =====
-# Gebaseerd op het bewezen ArticleSearch-patroon (build_installer15.bat,
-# build_and_publish.ps1, publish.ps1, export_to_usb5.bat): dynamische
-# root-resolutie (geen hardcoded paden), .venv/venv-detectie met voorkeur
-# voor .venv, Intune-veilige Inno Setup-installer (CloseApplications=force,
-# RestartApplications=no), en GitHub-release via de 'gh' CLI.
-
-def get_build_installer_bat_template(app_name: str) -> str:
-    """Template voor build_installer.bat."""
-    import uuid
-    app_guid = str(uuid.uuid4()).upper()
-
-    return f'''@echo off
-chcp 65001 >nul
-setlocal EnableExtensions EnableDelayedExpansion
-
-rem Altijd uitvoeren vanuit de map waar dit .bat bestand staat
-cd /d "%~dp0"
-
-rem 🧩 Basisconfig
-set "PROJECT_NAME={app_name}"
-set "SPEC_FILE={app_name}.spec"
-set "DST_FOLDER=dist"
-set "LOGFILE=build_log.txt"
-set "TIMESTAMP_URL=http://timestamp.sectigo.com"
-set "SIGN_SUBJECT="
-
-rem Vaste AppId voor deze app (eenmalig gegenereerd bij het aanmaken van het
-rem project via Project Generator) - NIET wijzigen na de eerste release,
-rem anders herkent Inno Setup een update niet meer als upgrade van dezelfde
-rem installatie.
-set "APPGUID={{{app_guid}}}"
-
-rem ---- Python uit .venv prefereren ----
-set "PYEXE="
-if exist ".venv\\Scripts\\python.exe" set "PYEXE=.venv\\Scripts\\python.exe"
-if not defined PYEXE if exist "Scripts\\python.exe" set "PYEXE=Scripts\\python.exe"
-if not defined PYEXE set "PYEXE=python"
-
-for %%I in ("%PYEXE%") do (
-  if exist "%%~fI" set "PYEXE=%%~fI"
-)
-
-echo [info] Python: %PYEXE%
-"%PYEXE%" -V >nul 2>&1 || (echo ❌ Geen werkende Python gevonden.& pause & exit /b 1)
-
-rem ================================================
-rem [S0] Signing - optioneel, default N
-rem ================================================
-set "DO_SIGN=N"
-if defined BLD_DO_SIGN set "DO_SIGN=%BLD_DO_SIGN%"
-if defined BLD_DO_SIGN echo [sign] Modus via parameter: %BLD_DO_SIGN%
-if not defined BLD_DO_SIGN set /p DO_SIGN=[S0] Binaries signen? [J/N] (standaard N): 
-if not defined DO_SIGN set "DO_SIGN=N"
-
-set "SIGNTOOL_EXE="
-if /I "%DO_SIGN%"=="J" call :FIND_SIGNTOOL
-if /I "%DO_SIGN%"=="J" if not defined SIGNTOOL_EXE echo [WAARSCHUWING] signtool.exe niet gevonden. Signing overgeslagen.
-if /I "%DO_SIGN%"=="J" if not defined SIGNTOOL_EXE set "DO_SIGN=N"
-
-rem ---- Versie verhogen (via scripts\\bump_version.py, werkt op app/version.py) ----
-if defined BLD_BUMP_PART (
-  set "PART_TO_BUMP=%BLD_BUMP_PART%"
-  echo [0] 🔁 Versie-bump via parameter: %BLD_BUMP_PART%
-) else (
-  set /p PART_TO_BUMP=Welke versie wil je verhogen? ^(patch/minor/major, Enter = geen bump^) : 
-)
-if defined PART_TO_BUMP if not "%PART_TO_BUMP%"=="" (
-  echo [0] 🔁 Versie verhogen via scripts\\bump_version.py ^(%PART_TO_BUMP%^)...
-  "%PYEXE%" scripts\\bump_version.py %PART_TO_BUMP% || (echo ❌ Versieverhoging mislukt.& pause & exit /b 1)
-)
-
-rem ---- Versie robuust uitlezen uit app/version.py ----
-set "PY_READV=%TEMP%\\__read_version_tmp.py"
-set "VER_TXT=%TEMP%\\__version_out.txt"
-del /q "%PY_READV%" "%VER_TXT%" >nul 2>&1
-> "%PY_READV%" echo import importlib.util, io, os, re
->>"%PY_READV%" echo p=os.path.abspath('app/version.py'); v="0.0.0"
->>"%PY_READV%" echo try:
->>"%PY_READV%" echo ^    spec=importlib.util.spec_from_file_location("ver",p)
->>"%PY_READV%" echo ^    m=importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
->>"%PY_READV%" echo ^    v=str(getattr(m,"__version__","0.0.0"))
->>"%PY_READV%" echo except Exception:
->>"%PY_READV%" echo ^    t=io.open(p,'r',encoding='utf-8').read()
->>"%PY_READV%" echo ^    m=re.search(r"__version__\\s*=\\s*['\\^\\"\\s]*([0-9]+(?:\\.[0-9]+){{1,2}})",t)
->>"%PY_READV%" echo ^    v=m.group(1) if m else "0.0.0"
->>"%PY_READV%" echo io.open(r'%VER_TXT%','w',encoding='utf-8').write(v.strip())
-"%PYEXE%" "%PY_READV%" || (echo ❌ Versie uitlezen faalde.& del /q "%PY_READV%" >nul & pause & exit /b 1)
-del /q "%PY_READV%" >nul 2>&1
-set "NEW_VERSION=" & set /p NEW_VERSION=<"%VER_TXT%"
-del /q "%VER_TXT%" >nul 2>&1
-if not defined NEW_VERSION (echo ❌ Kon versie niet lezen.& pause & exit /b 1)
-echo [1] 🔎 Versie: %NEW_VERSION%
-
-rem ---- Afgeleide paden ----
-set "BUILD_FOLDER=%PROJECT_NAME%_%NEW_VERSION%"
-set "ABS_BUILD_FOLDER=%CD%\\%DST_FOLDER%\\%BUILD_FOLDER%"
-set "ISS_FILE=%DST_FOLDER%\\installer.iss"
-
-rem 🧹 Opschonen
-echo [2] 🧹 Opruimen...
-rmdir /s /q build 2>nul
-rmdir /s /q "%DST_FOLDER%" 2>nul
-del /q "%LOGFILE%" 2>nul
-
-rem 📦 Vereisten
-echo [3] 🔧 Pip ^& vereisten...
-"%PYEXE%" -m pip install --upgrade pip >nul
-if exist requirements.txt "%PYEXE%" -m pip install -r requirements.txt || (echo ❌ pip install -r faalde.& pause & exit /b 1)
-
-"%PYEXE%" -c "import PyInstaller" >nul 2>&1 || (
-  echo [3b] 📦 PyInstaller installeren...
-  "%PYEXE%" -m pip install "pyinstaller==6.11.1" "pyinstaller-hooks-contrib==2025.0" || (echo ❌ Installatie PyInstaller faalde.& pause & exit /b 1)
-)
-
-echo --- Build gestart op %DATE% %TIME% --- >> "%LOGFILE%"
-
-rem 🛠 Build (via SPEC - Analysis(["app/main.py"], ...))
-echo [4] 🛠 PyInstaller...
-"%PYEXE%" -m PyInstaller --clean --noconfirm "%SPEC_FILE%" || (echo ❌ PyInstaller build faalde.& pause & exit /b 1)
-
-set "INITIAL_EXE=%DST_FOLDER%\\%PROJECT_NAME%\\%PROJECT_NAME%.exe"
-if not exist "%INITIAL_EXE%" (echo ❌ EXE niet gevonden op "%INITIAL_EXE%".& pause & exit /b 1)
-
-rem 🔁 Hernoemen naar map met versie
-if exist "%DST_FOLDER%\\%BUILD_FOLDER%" rmdir /S /Q "%DST_FOLDER%\\%BUILD_FOLDER%"
-rename "%DST_FOLDER%\\%PROJECT_NAME%" "%BUILD_FOLDER%"
-
-rem 🔏 Signing (optioneel, certificaatstore)
-if /I "%DO_SIGN%"=="J" if defined SIGNTOOL_EXE (
-  for /r "%DST_FOLDER%\\%BUILD_FOLDER%" %%F in (*.exe *.dll) do call :SIGN_FILE "%%F"
-) else (
-  echo [INFO] Signing overgeslagen ^(DO_SIGN=%DO_SIGN%^).
-)
-
-rem ❓ Inno Setup?
-if defined BLD_MAKE_INSTALLER (
-  set "MAKE_INSTALLER=%BLD_MAKE_INSTALLER%"
-  echo [6] 📦 Installer via parameter: %BLD_MAKE_INSTALLER%
-) else (
-  set "MAKE_INSTALLER=J"
-  set /p MAKE_INSTALLER=Ook Inno Setup installer bouwen? [J/N] : 
-)
-if /I "%MAKE_INSTALLER%"=="N" goto SHOW_OUTPUT
-
-rem 📝 Inno script genereren
-if not exist "%DST_FOLDER%" mkdir "%DST_FOLDER%" >nul 2>&1
-del /q "%ISS_FILE%" >nul 2>&1
-echo [6b] 📝 Installer-script genereren...
-
->>"%ISS_FILE%" echo ; --- Inno Setup script, automatisch gegenereerd ---
->>"%ISS_FILE%" echo [Setup]
->>"%ISS_FILE%" echo AppId=%APPGUID%
->>"%ISS_FILE%" echo AppName=%PROJECT_NAME%
->>"%ISS_FILE%" echo AppVersion=%NEW_VERSION%
->>"%ISS_FILE%" echo AppVerName=%PROJECT_NAME% %NEW_VERSION%
->>"%ISS_FILE%" echo DefaultDirName=C:\\%PROJECT_NAME%
->>"%ISS_FILE%" echo DisableDirPage=yes
->>"%ISS_FILE%" echo UsePreviousAppDir=no
->>"%ISS_FILE%" echo DefaultGroupName=%PROJECT_NAME%
->>"%ISS_FILE%" echo DisableProgramGroupPage=yes
->>"%ISS_FILE%" echo OutputDir=.
->>"%ISS_FILE%" echo OutputBaseFilename=%PROJECT_NAME%Setup_%NEW_VERSION%
->>"%ISS_FILE%" echo Compression=lzma
->>"%ISS_FILE%" echo SolidCompression=yes
->>"%ISS_FILE%" echo Uninstallable=yes
->>"%ISS_FILE%" echo CreateAppDir=yes
->>"%ISS_FILE%" echo PrivilegesRequired=admin
->>"%ISS_FILE%" echo ArchitecturesInstallIn64BitMode=x64
->>"%ISS_FILE%" echo DirExistsWarning=no
->>"%ISS_FILE%" echo WizardStyle=modern
-if exist "assets\\icons\\app_icon.ico" (
->>"%ISS_FILE%" echo SetupIconFile="%CD%\\assets\\icons\\app_icon.ico"
-)
-rem Sluit een reeds draaiende exe automatisch af vóór het kopiëren van
-rem bestanden (voorkomt gelockte-exe-fouten bij updates). "force" = geen
-rem prompt, ook niet interactief - vereist voor een probleemloze
-rem /VERYSILENT-run via Intune of vergelijkbare tooling.
-rem RestartApplications=no: de app bewust NIET automatisch herstarten na
-rem install (relevant zodra dit via SYSTEM-context gedeployed wordt).
->>"%ISS_FILE%" echo CloseApplicationsFilter=%PROJECT_NAME%.exe
->>"%ISS_FILE%" echo CloseApplications=force
->>"%ISS_FILE%" echo RestartApplications=no
->>"%ISS_FILE%" echo.
->>"%ISS_FILE%" echo [InstallDelete]
->>"%ISS_FILE%" echo Type: filesandordirs; Name: "{{app}}\\_internal"
->>"%ISS_FILE%" echo Type: filesandordirs; Name: "{{app}}\\__pycache__"
->>"%ISS_FILE%" echo.
->>"%ISS_FILE%" echo [Files]
->>"%ISS_FILE%" echo Source: "%ABS_BUILD_FOLDER%\\*"; DestDir: "{{app}}"; Flags: ignoreversion recursesubdirs createallsubdirs
->>"%ISS_FILE%" echo.
->>"%ISS_FILE%" echo [Icons]
->>"%ISS_FILE%" echo Name: "{{group}}\\%PROJECT_NAME%"; Filename: "{{app}}\\%PROJECT_NAME%.exe"; WorkingDir: "{{app}}"
->>"%ISS_FILE%" echo Name: "{{commondesktop}}\\%PROJECT_NAME%"; Filename: "{{app}}\\%PROJECT_NAME%.exe"; WorkingDir: "{{app}}"; Tasks: desktopicon
->>"%ISS_FILE%" echo.
->>"%ISS_FILE%" echo [Tasks]
->>"%ISS_FILE%" echo Name: "desktopicon"; Description: "Maak een snelkoppeling op het bureaublad"; GroupDescription: "Extra opties:"
->>"%ISS_FILE%" echo.
->>"%ISS_FILE%" echo [Run]
->>"%ISS_FILE%" echo Filename: "{{app}}\\%PROJECT_NAME%.exe"; WorkingDir: "{{app}}"; Description: "Start %PROJECT_NAME%"; Flags: nowait postinstall skipifsilent
-
-rem 🔨 Inno Setup compileren
-echo [7] 🔨 Inno Setup compileren...
-set "ISCC_EXE="
-if exist "C:\\Program Files (x86)\\Inno Setup 6\\ISCC.exe" set "ISCC_EXE=C:\\Program Files (x86)\\Inno Setup 6\\ISCC.exe"
-if not defined ISCC_EXE if exist "C:\\Program Files\\Inno Setup 6\\ISCC.exe" set "ISCC_EXE=C:\\Program Files\\Inno Setup 6\\ISCC.exe"
-if not defined ISCC_EXE (
-  echo ⚠️  ISCC.exe niet gevonden. Installeer Inno Setup 6.
-  goto SHOW_OUTPUT
-)
-"%ISCC_EXE%" "%ISS_FILE%"
-if errorlevel 1 (
-  echo [FOUT] Inno Setup compile mislukt. Bekijk "%ISS_FILE%".
-  goto SHOW_OUTPUT
-)
-echo ✅ Installer aangemaakt: %DST_FOLDER%\\%PROJECT_NAME%Setup_%NEW_VERSION%.exe
-
-if /I "%DO_SIGN%"=="J" if defined SIGNTOOL_EXE (
-  if exist "%DST_FOLDER%\\%PROJECT_NAME%Setup_%NEW_VERSION%.exe" call :SIGN_FILE "%DST_FOLDER%\\%PROJECT_NAME%Setup_%NEW_VERSION%.exe"
-)
-
-:SHOW_OUTPUT
-echo.
-echo 📂 Output-map: %DST_FOLDER%\\%BUILD_FOLDER%
-echo 💡 Testen: "%DST_FOLDER%\\%BUILD_FOLDER%\\%PROJECT_NAME%.exe"
-echo 🧩 Installer (indien gebouwd): %DST_FOLDER%\\%PROJECT_NAME%Setup_%NEW_VERSION%.exe
-if not defined BLD_BUMP_PART pause
-endlocal
-exit /b 0
-
-rem ================================================
-:FIND_SIGNTOOL
-set "SIGNTOOL_EXE="
-if exist "C:\\Program Files (x86)\\Windows Kits\\10\\bin\\x64\\signtool.exe" (
-  set "SIGNTOOL_EXE=C:\\Program Files (x86)\\Windows Kits\\10\\bin\\x64\\signtool.exe"
-  goto :eof
-)
-for /f "delims=" %%S in ('where signtool.exe 2^>nul') do (
-  set "SIGNTOOL_EXE=%%S"
-  goto :eof
-)
-goto :eof
-
-rem ================================================
-:SIGN_FILE
-if not exist "%~1" exit /b 1
-if not defined SIGNTOOL_EXE exit /b 1
-if defined SIGN_SUBJECT (
-  "%SIGNTOOL_EXE%" sign /fd SHA256 /td SHA256 /tr "%TIMESTAMP_URL%" /n "%SIGN_SUBJECT%" "%~1"
-) else (
-  "%SIGNTOOL_EXE%" sign /fd SHA256 /td SHA256 /tr "%TIMESTAMP_URL%" /a "%~1"
-)
-exit /b 0
-'''
-
-
-def get_build_and_publish_ps1_template(app_name: str) -> str:
-    """Template voor build_and_publish.ps1."""
-    return f'''# build_and_publish.ps1 - {app_name}
-# Vraagt alle build-parameters vooraf, voert build_installer.bat niet-
-# interactief uit (via BLD_*-env vars), en publiceert daarna optioneel via
-# publish.ps1 naar GitHub.
-# Run vanuit de repo root: .\\build_and_publish.ps1
-
-$ErrorActionPreference = "Stop"
-
-$Root = Split-Path -Parent $MyInvocation.MyCommand.Path
-Set-Location $Root
-
-$buildBat  = Join-Path $Root "build_installer.bat"
-$publishPs = Join-Path $Root "publish.ps1"
-
-if (-not (Test-Path $buildBat))  {{ throw "Niet gevonden: $buildBat" }}
-if (-not (Test-Path $publishPs)) {{ throw "Niet gevonden: $publishPs" }}
-
-Write-Host ""
-Write-Host "============================================================"
-Write-Host "  {app_name} - Build + Publish"
-Write-Host "============================================================"
-Write-Host ""
-
-$bumpPart = Read-Host "Versie verhogen? [patch/minor/major] (Enter = geen bump)"
-
-$makeInstaller = ""
-while ($makeInstaller -notin @("J", "N", "j", "n")) {{
-    $makeInstaller = Read-Host "Inno Setup installer bouwen? [J/N] (Enter = J)"
-    if ($makeInstaller -eq "") {{ $makeInstaller = "J" }}
-}}
-$makeInstaller = $makeInstaller.ToUpper()
-
-$doSign = ""
-while ($doSign -notin @("J", "N", "j", "n")) {{
-    $doSign = Read-Host "Binaries signen (certificaatstore)? [J/N] (Enter = N)"
-    if ($doSign -eq "") {{ $doSign = "N" }}
-}}
-$doSign = $doSign.ToUpper()
-
-$doPublish = ""
-while ($doPublish -notin @("J", "N", "j", "n")) {{
-    $doPublish = Read-Host "Publiceren naar GitHub na build? [J/N] (Enter = N)"
-    if ($doPublish -eq "") {{ $doPublish = "N" }}
-}}
-$doPublish = $doPublish.ToUpper()
-
-Write-Host ""
-Write-Host "------------------------------------------------------------"
-Write-Host "  Samenvatting:"
-Write-Host "    Versie-bump : $(if ($bumpPart) {{ $bumpPart }} else {{ '(geen)' }})"
-Write-Host "    Installer   : $makeInstaller"
-Write-Host "    Signing     : $doSign"
-Write-Host "    Publiceren  : $doPublish"
-Write-Host "------------------------------------------------------------"
-$bevestig = Read-Host "Starten? [J/N]"
-if ($bevestig.ToUpper() -ne "J") {{
-    Write-Host "Afgebroken."
-    exit 0
-}}
-
-Write-Host ""
-Write-Host "[STEP 1/2] Build starten..."
-
-$wrapperPath = Join-Path $Root "_build_wrapper.bat"
-$wrapperContent = "@echo off`r`n"
-if ($bumpPart) {{ $wrapperContent += "set BLD_BUMP_PART=$bumpPart`r`n" }}
-$wrapperContent += "set BLD_MAKE_INSTALLER=$makeInstaller`r`n"
-$wrapperContent += "set BLD_DO_SIGN=$doSign`r`n"
-$wrapperContent += "call `"$buildBat`"`r`n"
-$wrapperContent += "exit /b %ERRORLEVEL%`r`n"
-[System.IO.File]::WriteAllText($wrapperPath, $wrapperContent, [System.Text.Encoding]::ASCII)
-
-& cmd.exe /c "`"$wrapperPath`""
-$buildExitCode = $LASTEXITCODE
-
-Remove-Item $wrapperPath -ErrorAction SilentlyContinue
-Remove-Item Env:\\BLD_BUMP_PART      -ErrorAction SilentlyContinue
-Remove-Item Env:\\BLD_MAKE_INSTALLER -ErrorAction SilentlyContinue
-Remove-Item Env:\\BLD_DO_SIGN        -ErrorAction SilentlyContinue
-
-if ($buildExitCode -ne 0) {{
-    throw "Build faalde (exitcode $buildExitCode). Zie output hierboven."
-}}
-
-Write-Host "[STEP 1/2] Build geslaagd."
-
-if ($doPublish -eq "J") {{
-    if ($makeInstaller -ne "J") {{
-        Write-Host "[WARN] Installer niet gebouwd - publiceren overgeslagen."
-    }} else {{
-        Write-Host ""
-        Write-Host "[STEP 2/2] Publiceren via publish.ps1..."
-        & powershell -ExecutionPolicy Bypass -File $publishPs
-        if ($LASTEXITCODE -ne 0) {{ throw "Publish faalde (exitcode $LASTEXITCODE)." }}
-        Write-Host "[STEP 2/2] Publiceren geslaagd."
-    }}
-}} else {{
-    Write-Host "[STEP 2/2] Publiceren overgeslagen (keuze gebruiker)."
-}}
-
-Write-Host ""
-Write-Host "============================================================"
-Write-Host "[DONE] Build + Publish afgerond."
-Write-Host "============================================================"
-'''
-
-
-def get_publish_ps1_template(app_name: str) -> str:
-    """Template voor publish.ps1."""
-    repo_guess = app_name.lower().replace(" ", "-").replace("_", "-")
-
-    return f'''# publish.ps1 - {app_name} (release + asset + version.txt)
-# Run vanuit de repo root: .\\publish.ps1
-# Vereist: gh (ingelogd) + git
-#
-# LET OP: -Owner/-Repo hieronder zijn PLACEHOLDERS. Pas deze aan naar je
-# eigen GitHub-organisatie/gebruiker en repository-naam vóór je dit
-# script effectief gebruikt, of geef ze mee als parameter:
-#   .\\publish.ps1 -Owner "jouw-github-naam" -Repo "{repo_guess}"
-
-param(
-    [string]$Owner = "TODO-github-owner",
-    [string]$Repo = "{repo_guess}"
-)
-
-$ErrorActionPreference = "Stop"
-
-$Root = Split-Path -Parent $MyInvocation.MyCommand.Path
-Set-Location $Root
-
-if ($Owner -eq "TODO-github-owner") {{
-    throw "Vul eerst -Owner in (of pas de default in publish.ps1 aan) vóór je publiceert."
-}}
-
-# 1) Versie lezen uit app/version.py
-$versionPy = Join-Path $Root "app/version.py"
-if (-not (Test-Path $versionPy)) {{ throw "Niet gevonden: $versionPy" }}
-
-$txt = Get-Content $versionPy -Raw
-$m = [regex]::Match($txt, '__version__\\s*=\\s*["''](?<v>\\d+\\.\\d+\\.\\d+)["'']')
-if (-not $m.Success) {{ throw "Kon __version__ niet vinden in app/version.py" }}
-$version = $m.Groups["v"].Value
-
-$tag = "v$version"
-$assetName = "{app_name}Setup_$version.exe"
-$assetPath = Join-Path $Root ("dist\\" + $assetName)
-
-Write-Host "[INFO] Repo: $Owner/$Repo"
-Write-Host "[INFO] Versie: $version"
-Write-Host "[INFO] Tag: $tag"
-Write-Host "[INFO] Asset: $assetPath"
-
-if (-not (Test-Path $assetPath)) {{
-    throw "Installer niet gevonden: $assetPath`nRun eerst build_installer.bat (of build_and_publish.ps1) en maak de installer."
-}}
-
-$releaseExists = $false
-try {{
-    & gh release view $tag --repo "$Owner/$Repo" *> $null
-    if ($LASTEXITCODE -eq 0) {{ $releaseExists = $true }}
-}}
-catch {{
-    $releaseExists = $false
-}}
-
-if (-not $releaseExists) {{
-    Write-Host "[INFO] Release $tag bestaat nog niet. Maken..."
-    & gh release create $tag --repo "$Owner/$Repo" --title "$tag" --notes "Release $tag"
-    if ($LASTEXITCODE -ne 0) {{ throw "Aanmaken release $tag mislukt." }}
-}} else {{
-    Write-Host "[INFO] Release $tag bestaat al."
-}}
-
-Write-Host "[INFO] Uploaden asset..."
-& gh release upload $tag "$assetPath" --repo "$Owner/$Repo" --clobber
-if ($LASTEXITCODE -ne 0) {{ throw "Upload asset mislukt." }}
-
-$downloadUrl = "https://github.com/$Owner/$Repo/releases/download/$tag/$assetName"
-Write-Host "[OK] Download URL: $downloadUrl"
-
-# version.txt (2 regels) - dit is het bestand dat een updater.py-achtig
-# mechanisme rechtstreeks als raw-bestand zou ophalen, analoog ArticleSearch.
-$versionTxt = Join-Path $Root "releases\\latest\\version.txt"
-$versionDir = Split-Path -Parent $versionTxt
-if (-not (Test-Path $versionDir)) {{ New-Item -ItemType Directory -Path $versionDir -Force | Out-Null }}
-
-$utf8NoBom = New-Object System.Text.UTF8Encoding($false)
-[System.IO.File]::WriteAllText($versionTxt, "$version`n$downloadUrl", $utf8NoBom)
-
-& git add "app/version.py" "releases/latest/version.txt"
-& git commit -m "Release $version - sync version.py and version.txt" *> $null
-& git push
-if ($LASTEXITCODE -ne 0) {{
-    throw "git push MISLUKT (exitcode $LASTEXITCODE). De GitHub Release en de installer-asset staan wel al online (via 'gh', los van git push), maar app/version.py/releases/latest/version.txt zijn enkel LOKAAL gecommit. Los het pushprobleem op (bv. eerst 'git pull --rebase origin main') en run dan handmatig: git push"
-}}
-Write-Host "[OK] version.py/version.txt succesvol gepusht naar $Owner/$Repo."
-
-Write-Host ""
-Write-Host "============================================================"
-Write-Host "[DONE] Published $tag"
-Write-Host "Release: https://github.com/$Owner/$Repo/releases/tag/$tag"
-Write-Host "============================================================"
-'''
-
-
 # ==== UPDATE create_standard_project_template ====
 
 def create_standard_project_template(name: str, version: str, author: str, 
@@ -2905,10 +2452,6 @@ def create_standard_project_template(name: str, version: str, author: str,
     app_folder.add_file("main.py", "Hoofdapplicatie", get_main_py_template())
     app_folder.add_file("version.py", "Versie informatie", get_version_py_template(version))
     
-    # core folder (Python package) - kernlogica / gedeelde functionaliteit,
-    # los van app/ (naar CGK-conventie: app/core/, zie 01-app-structuur-template.md)
-    core_folder = FolderTemplate(name="core", python_package=True)
-    
     # config folder
     config_folder = FolderTemplate(name="config")
     config_folder.add_file("settings.json", "Applicatie configuratie", get_settings_config_template())
@@ -2937,18 +2480,6 @@ def create_standard_project_template(name: str, version: str, author: str,
     # utils folder (Python package)
     utils_folder = FolderTemplate(name="utils", python_package=True)
     
-    # ui folder (Python package) - GUI-schermen (naar ArticleSearch-conventie:
-    # ui_*.py-bestanden)
-    ui_folder = FolderTemplate(name="ui", python_package=True)
-    
-    # dialogs folder (Python package) - modale QDialog-vensters (naar
-    # ArticleSearch-conventie: *_dialog.py-bestanden)
-    dialogs_folder = FolderTemplate(name="dialogs", python_package=True)
-    
-    # token folder (Python package) - per-domein token/auth-gerelateerde
-    # modules (naar ArticleSearch-conventie: *_token.py-bestanden)
-    token_folder = FolderTemplate(name="token", python_package=True)
-    
     # md folder
     md_folder = FolderTemplate(name="md")
     md_folder.add_file("help.md", "Help documentatie", get_help_md_template(name))
@@ -2966,7 +2497,6 @@ def create_standard_project_template(name: str, version: str, author: str,
     
     # i18n folder (Python package) met locales
     i18n_folder = FolderTemplate(name="i18n", python_package=True)
-    i18n_folder.add_file("__init__.py", "Package initialisatie voor i18n", get_i18n_init_template())
     i18n_folder.add_file("translator.py", "Translation helper", get_translator_py_template())
     i18n_folder.add_file("README.md", "i18n documentatie", get_i18n_readme_template())
     
@@ -2982,7 +2512,6 @@ def create_standard_project_template(name: str, version: str, author: str,
     # Voeg alle folders toe
     project.add_folder(vscode_folder)
     project.add_folder(app_folder)
-    project.add_folder(core_folder)  # ← core TOEGEVOEGD
     project.add_folder(config_folder)
     project.add_folder(assets_folder)
     project.add_folder(css_folder)
@@ -2990,9 +2519,6 @@ def create_standard_project_template(name: str, version: str, author: str,
     project.add_folder(docs_folder)
     project.add_folder(helpers_folder)
     project.add_folder(utils_folder)
-    project.add_folder(ui_folder)
-    project.add_folder(dialogs_folder)
-    project.add_folder(token_folder)
     project.add_folder(md_folder)
     project.add_folder(scripts_folder)
     project.add_folder(i18n_folder)  # ← i18n TOEGEVOEGD
@@ -3023,13 +2549,5 @@ def create_standard_project_template(name: str, version: str, author: str,
     # Root files - Development tools
     project.add_file("Makefile", "Development shortcuts", 
                      get_makefile_template(name))
-    
-    # Root files - Build & release (naar ArticleSearch-patroon)
-    project.add_file("build_installer.bat", "PyInstaller build + Inno Setup installer generator",
-                     get_build_installer_bat_template(name))
-    project.add_file("build_and_publish.ps1", "Build + publish orchestrator",
-                     get_build_and_publish_ps1_template(name))
-    project.add_file("publish.ps1", "GitHub release publiceren (asset + version.txt)",
-                     get_publish_ps1_template(name))
     
     return project

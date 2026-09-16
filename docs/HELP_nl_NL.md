@@ -1,6 +1,6 @@
 # Project Generator - Uitgebreide Help
 
-**Versie:** 1.0.4  
+**Versie:** 1.2.0  
 **Auteur:** Barremans
 
 ---
@@ -10,12 +10,13 @@
 1. [Overzicht](#overzicht)
 2. [Basis Gebruik](#basis-gebruik)
 3. [Instellingen](#instellingen)
-4. [Modern Python Packaging](#modern-python-packaging)
-5. [Scripts Systeem](#scripts-systeem)
-6. [Keyboard Shortcuts](#keyboard-shortcuts)
-7. [Projectstructuur](#projectstructuur)
-8. [Development Workflow](#development-workflow)
-9. [Veelgestelde Vragen](#veelgestelde-vragen)
+4. [Tools: Headers \& Structuur](#tools-headers--structuur)
+5. [Modern Python Packaging](#modern-python-packaging)
+6. [Scripts Systeem](#scripts-systeem)
+7. [Keyboard Shortcuts](#keyboard-shortcuts)
+8. [Projectstructuur](#projectstructuur)
+9. [Development Workflow](#development-workflow)
+10. [Veelgestelde Vragen](#veelgestelde-vragen)
 
 ---
 
@@ -84,6 +85,59 @@ Commando of pad naar je favoriete editor:
 - **Sublime**: `subl`
 - **PyCharm**: `C:\Program Files\JetBrains\PyCharm\bin\pycharm64.exe`
 - **Volledig pad**: Voor elke andere editor
+
+---
+
+## Tools: Headers & Structuur
+
+Via **Menu → Tools → Headers & Structuur...** open je een apart venster met
+twee tools, geport uit het vroegere losstaande project-doc-tool-project
+(dat hiermee volledig is opgenomen in Project Generator):
+
+### Werking
+1. Klik **📂 Kies projectmap** — de map die je wil analyseren/documenteren
+   (dit hoeft niet per se een net gegenereerd project te zijn — elke
+   bestaande Python-projectmap werkt).
+2. Klik **📂 Kies outputmap** — waar `PROJECT_STRUCTURE.md` terechtkomt.
+   Springt automatisch mee naar `<projectmap>/docs` zodra je een nieuwe
+   projectmap kiest, maar blijft daarna op je eigen keuze staan.
+3. Drie acties:
+   - **▶ Dry-run headers**: toont per bestand of het een correcte header
+     heeft, geen header, of een foutieve header — wijzigt niets.
+   - **✍ Headers toevoegen**: voegt/herstelt effectief headers, in Project
+     Generator's eigen headerformaat.
+   - **📑 Projectstructuur genereren**: schrijft `PROJECT_STRUCTURE.md` (een
+     boomoverzicht met per ondersteund bestand de headermetadata als
+     fenced code-block) en opent nadien automatisch de outputmap.
+
+Elk **nieuw gegenereerd** project krijgt dit bestand overigens al
+automatisch in `docs/` bij het aanmaken (zie [Projectstructuur](#projectstructuur))
+— de Tools-dialoog is er vooral voor bestaande/externe projecten, of om het
+opnieuw te genereren na latere wijzigingen.
+
+### Instellingen (Tools)
+Via de **"⚙ Settings"**-knop in de Tools-dialoog (los van de hoofd-
+Instellingen hierboven):
+- **Include extensies**: welke bestandstypes gescand worden (standaard
+  `.py`, `.txt`, `.ini`, `.yaml`, `.yml`)
+- **Exclude mappen**: mappen die volledig overgeslagen worden (standaard
+  o.a. `.git`, `.venv`, `__pycache__`, `build`, `dist`, `.vscode`)
+- **Exclude bestanden**: bestandsnamen die overgeslagen worden
+- **Applicatie**: vaste waarde voor de "Applicatie:"-regel, of leeg om
+  automatisch de mapnaam te gebruiken
+- **Standaard versie**: fallback-versie voor bestanden zonder header
+
+De auteursnaam voor headers is **geen** apart veld hier — dat is dezelfde
+"Standaard Auteur" als in de hoofd-Instellingen.
+
+### Standalone (zonder GUI)
+Dezelfde functionaliteit is ook los uit te voeren:
+```bash
+cd scripts
+python generate_project_structure.py --project-root "C:\PY\MijnApp"
+python add_headers.py --project-root "C:\PY\MijnApp"            # dry-run
+python add_headers.py --project-root "C:\PY\MijnApp" --apply    # effectief
+```
 
 ---
 
@@ -340,6 +394,9 @@ MijnProject/
 │   ├── main.py            # Entry point
 │   └── version.py         # Versie definitie
 │
+├── core/                   # Kernlogica / gedeelde functionaliteit (Python package)
+│   └── __init__.py
+│
 ├── assets/                 # Media bestanden
 │   └── icons/             # Standaard icons (PNG, ICO)
 │
@@ -355,6 +412,7 @@ MijnProject/
 │
 ├── docs/                   # Documentatie
 │   └── changelog.md
+│   (PROJECT_STRUCTURE.md wordt hier automatisch aangemaakt na generatie)
 │
 ├── helpers/                # Helper functies (package)
 │   └── __init__.py
@@ -617,6 +675,6 @@ flake8 .
 
 ---
 
-**Versie:** 1.0.4  
-**Laatste update:** 2024-02-12  
+**Versie:** 1.2.0  
+**Laatste update:** 2026-09-16  
 **Auteur:** Barremans

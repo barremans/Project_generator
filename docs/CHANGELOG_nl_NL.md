@@ -2,6 +2,56 @@
 
 Alle wijzigingen aan de Project Generator worden hier gedocumenteerd.
 
+## [1.2.0] - 2026-09-16
+
+### Toegevoegd
+- **Nieuw "Tools"-menu** (tussen Taal en Help) met actie **"Headers & Structuur..."** —
+  bundelt twee tools geport uit het losstaande project-doc-tool-project, dat
+  hiermee is samengevoegd in Project Generator (er blijft dus nog 1
+  applicatie over):
+  - **Dry-run headers**: analyseert een gekozen projectmap en toont welke
+    bestanden geen of een foutieve header hebben, zonder iets te wijzigen
+  - **Headers toevoegen**: voegt/herstelt effectief headers, in Project
+    Generator's eigen headerformaat (`File:`/`Rol:`/`Applicatie:`/`Versie:`/
+    `Auteur:`/`Changes:`)
+  - **Projectstructuur genereren**: genereert `PROJECT_STRUCTURE.md`
+    (boomoverzicht + headermetadata per bestand als fenced code-block) voor
+    een gekozen projectmap én outputmap; opent de outputmap automatisch na
+    afloop
+- **Nieuwe Tools-instellingen** (via de "⚙ Settings"-knop in de
+  Tools-dialoog): include-extensies, exclude-mappen, exclude-bestanden, en
+  headerdefaults voor applicatie/versie (auteur hergebruikt de bestaande
+  "Standaard Auteur"-instelling — geen dubbel veld)
+- Projectmap en outputmap van de Tools-dialoog worden onthouden tussen
+  sessies
+- Elk nieuw gegenereerd project krijgt voortaan automatisch een
+  `docs/PROJECT_STRUCTURE.md` (nieuwe stap 9 in de generator), naast de
+  mogelijkheid om dit ook apart/opnieuw te genereren via Tools
+- Nieuwe standalone scripts: `scripts/generate_project_structure.py` en
+  `scripts/add_headers.py` (dry-run-by-default, `--apply` voor effectieve
+  wijzigingen bij add_headers)
+
+### Gewijzigd
+- `core/extension_registry.py` herkent headers voortaan in twee
+  vocabularia (het oude project-doc-tool-formaat en Project Generator's
+  eigen formaat) — nodig zodat reeds gegenereerde bestanden niet onterecht
+  als "geen header" verschijnen
+
+### Opgelost
+- BUGFIX (geport uit project-doc-tool, bestond al in het origineel):
+  header-detectie op korte bestanden (< 30 regels) faalde stil door een
+  PEP 479-incompatibiliteit — nu gefixed met `itertools.islice`
+- BUGFIX: het schrijven van `//`-commentaar in `.json`-bestanden (ongeldige
+  JSON) is stopgezet — `.json` wordt voortaan overgeslagen bij het
+  toevoegen van headers
+
+## [1.1.0] - 2026-09-15
+
+### Toegevoegd
+- **`core/`-map**: nieuwe standaardmap in de gegenereerde projectstructuur,
+  met een `__init__.py` — bedoeld voor kernlogica/gedeelde functionaliteit,
+  los van de `app/`-package.
+
 ## [1.0.4] - 2024-02-12
 
 ### Toegevoegd

@@ -1,10 +1,16 @@
 """
-utils/venv_helper.py
-
-Beschrijving: Helper voor virtuele omgeving setup
+File:    /utils/venv_helper.py
+Rol:     Helper voor virtuele omgeving setup
 Applicatie: Project Generator
-Versie: 1.0.0
-Auteur: Barremans
+Versie:  1.0.1
+Auteur:  Barremans
+Changes: 1.0.1 - BUGFIX: alle paden gebruikten "venv" i.p.v. ".venv" —
+                  nu consistent met context.py en de CGK-conventie.
+                  Let op: deze functies dupliceren generator.py's
+                  ProjectGenerator._create_venv()/_get_export_script_template()
+                  en worden momenteel nergens aangeroepen — overweeg één van
+                  beide implementaties te laten vervallen.
+Changes: 1.0.0 - Baseline.
 """
 
 import subprocess
@@ -24,7 +30,7 @@ def create_venv(project_root: Path, python_exe: Optional[str] = None) -> bool:
     Returns:
         True als succesvol
     """
-    venv_path = project_root / "venv"
+    venv_path = project_root / ".venv"
     
     # Gebruik opgegeven Python of huidige interpreter
     python_cmd = python_exe if python_exe else sys.executable
@@ -62,7 +68,7 @@ def upgrade_pip(project_root: Path) -> bool:
     Returns:
         True als succesvol
     """
-    pip_path = project_root / "venv" / "Scripts" / "pip.exe"
+    pip_path = project_root / ".venv" / "Scripts" / "pip.exe"
     
     if not pip_path.exists():
         print(f"❌ Pip niet gevonden: {pip_path}")
@@ -97,7 +103,7 @@ def install_requirements(project_root: Path, packages: Optional[List[str]] = Non
     Returns:
         True als succesvol
     """
-    pip_path = project_root / "venv" / "Scripts" / "pip.exe"
+    pip_path = project_root / ".venv" / "Scripts" / "pip.exe"
     
     if not pip_path.exists():
         print(f"❌ Pip niet gevonden: {pip_path}")
@@ -184,7 +190,7 @@ def setup_complete_venv(project_root: Path,
     print("=" * 60)
     print()
     print("📝 Activeren:")
-    print(f"   {project_root / 'venv' / 'Scripts' / 'activate.bat'}")
+    print(f"   {project_root / '.venv' / 'Scripts' / 'activate.bat'}")
     print()
     
     return True
