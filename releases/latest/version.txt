@@ -1,2 +1,2 @@
-2.0.0
-https://github.com/barremans/Project_generator/releases/download/v2.0.0/Project_GeneratorSetup_2.0.0.exe
+2.0.1
+https://github.com/barremans/Project_generator/releases/download/v2.0.1/Project_GeneratorSetup_2.0.1.exe
