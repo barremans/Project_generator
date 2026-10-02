@@ -4,8 +4,53 @@ Rol:     Centrale definitie van ondersteunde bestandsextensies voor
          PROJECT_STRUCTURE.md-generatie en add_headers, en het uitlezen/
          opbouwen van headermetadata voor die bestanden.
 Applicatie: Project Generator
-Versie:  2.3.0
+Versie:  2.5.0
 Auteur:  Barremans
+Changes: 2.5.0 - Aliaslijst uitgebreid na mismatch vastgesteld op een echt
+                  bestaand project (capacitor_esr_validator,
+                  instrument_profiles.py): dat project gebruikt een VIERDE
+                  headervocabularium ("Module:"/"Project:"/"Doel:"/"Datum:",
+                  naast Versie:/Auteur: die toevallig al herkend werden) dat
+                  nog niet in _LABEL_ALIASES zat — PROJECT_STRUCTURE.md toonde
+                  daardoor "GEEN BESCHRIJVING"/"GEEN APPLICATIE" voor zo goed
+                  als elk bestand, terwijl die info wel degelijk aanwezig was
+                  (enkel onder andere labels). Toegevoegd: "module" ->
+                  bestandsnaam, "project" -> applicatie, "doel" ->
+                  beschrijving. Nieuw: "datum"/"date" als apart
+                  (optioneel, geen DEFAULT_*) metadataveld — stond voorheen
+                  nergens gemodelleerd en ging dus stilzwijgend verloren bij
+                  het uitlezen, ondanks dat het echt in het bestand staat.
+Changes: 2.4.0 - EXTENSION_TEMPLATES volledig herschreven naar de officiële
+                  CGK-conventie uit 00-conventions.md §4, i.p.v. Project
+                  Generator's eigen Dutch-labeled docstring-stijl (open punt
+                  context_ProjectGenerator.md §7.3 — hiermee afgesloten):
+                  (1) .py: niet langer een python-docstring ("\"\"\"..."),
+                      maar een "#"-commentaarblok met "===="-scheidingslijnen,
+                      conform de conventie. Labels nu Engels: File:/Role:/
+                      Version:/Author:/Changes: i.p.v. Rol:/Versie:/Auteur:.
+                  (2) BEWUSTE afwijking t.o.v. de letterlijke conventie
+                      (bevestigd door gebruiker): de conventie plaatst de
+                      appnaam ongelabeld op de tweede regel ("# <AppNaam>"),
+                      wat niet machine-leesbaar is voor generate_index.py's
+                      per-bestand "Applicatie"-metadata. In plaats daarvan
+                      krijgt die regel alsnog een expliciet "Applicatie:"
+                      -label — enige toegevoegde regel t.o.v. de standaard,
+                      de rest volgt die 1-op-1.
+                  (3) .txt/.ini/.yaml/.yml volgen nu de conventie's TWEEDE
+                      format ("Requirements / tekstuele configuratiefiles"):
+                      Nederlandse labels Beschrijving:/Versie:/Auteur:/
+                      Applicatie:, GEEN aparte bestandsnaam-regel (stond er
+                      v2.2.0-2.3.0 nog wel in, niet conform de conventie).
+                  (4) Leeslogica (_extract_raw_metadata/_LABEL_ALIASES)
+                      BEWUST ONGEWIJZIGD: blijft breed/tolerant zodat
+                      bestaande/legacy projecten (oudere project-doc-tool-
+                      stijl, ArticleSearch, …) bij "Projectstructuur
+                      genereren" correct blijven uitgelezen worden, ook al
+                      schrijft add_headers.py voortaan nog maar één stijl.
+                      Onderscheid schrijven (nieuw project / headers
+                      toevoegen = altijd de nieuwe CGK-stijl) vs. lezen
+                      (bestaande projecten = alle herkende stijlen) expliciet
+                      bevestigd door gebruiker.
 Changes: 2.3.0 - BUGFIX: extract_metadata_from_text() vulde defaults al
                   in vóór add_headers.py zijn eigen "applicatie"-fallback
                   kon toepassen, waardoor die parameter effectief nooit
@@ -66,53 +111,56 @@ EXTENSION_REGISTRY: Dict[str, dict] = {
 }
 
 # ============================================================
-# HEADER TEMPLATES — Project Generator's EIGEN formaat (header_renderer.py)
+# HEADER TEMPLATES — conform 00-conventions.md §4, + Applicatie:-label
 # ============================================================
 # Placeholders: {file} {rol} {applicatie} {versie} {auteur}
+# (interne sleutelnamen ongewijzigd t.o.v. vorige versies — enkel de
+# omliggende labeltekst per extensie is aangepast aan de CGK-conventie)
+#
+# .py  -> conventie-format "Python (*.py)": "#"-commentaarblok met
+#         "===="-scheidingslijnen, Engelse labels File:/Role:/Version:/
+#         Author:/Changes:. Enige toevoeging t.o.v. de letterlijke
+#         conventie: expliciet "Applicatie:"-label i.p.v. een ongelabelde
+#         appnaam-regel (bevestigd, nodig voor generate_index.py).
+# .txt/.ini/.yaml/.yml -> conventie-format "Requirements / tekstuele
+#         configuratiefiles": Nederlandse labels Beschrijving:/Versie:/
+#         Auteur:/Applicatie:, geen aparte bestandsnaam-regel.
 # .json is bewust afwezig (zie Changes 2.2.0 hierboven).
 
 EXTENSION_TEMPLATES: Dict[str, str] = {
     ".py": (
-        '"""\n'
-        "File:    {file}\n"
-        "Rol:     {rol}\n"
-        "Applicatie: {applicatie}\n"
-        "Versie:  {versie}\n"
-        "Auteur:  {auteur}\n"
-        "Changes: {versie} - Baseline (header automatisch toegevoegd).\n"
-        '"""\n\n'
+        "# =============================================================================\n"
+        "# Applicatie: {applicatie}\n"
+        "# File:    {file}\n"
+        "# Role:    {rol}\n"
+        "# Version: {versie}\n"
+        "# Author:  {auteur}\n"
+        "# Changes: {versie} - Baseline (header automatisch toegevoegd).\n"
+        "# =============================================================================\n\n"
     ),
     ".txt": (
-        "# File:    {file}\n"
-        "# Rol:     {rol}\n"
-        "# Applicatie: {applicatie}\n"
-        "# Versie:  {versie}\n"
-        "# Auteur:  {auteur}\n"
-        "# Changes: {versie} - Baseline (header automatisch toegevoegd).\n\n"
+        "# Beschrijving: {rol}\n"
+        "# Versie: {versie}\n"
+        "# Auteur: {auteur}\n"
+        "# Applicatie: {applicatie}\n\n"
     ),
     ".ini": (
-        "# File:    {file}\n"
-        "# Rol:     {rol}\n"
-        "# Applicatie: {applicatie}\n"
-        "# Versie:  {versie}\n"
-        "# Auteur:  {auteur}\n"
-        "# Changes: {versie} - Baseline (header automatisch toegevoegd).\n\n"
+        "# Beschrijving: {rol}\n"
+        "# Versie: {versie}\n"
+        "# Auteur: {auteur}\n"
+        "# Applicatie: {applicatie}\n\n"
     ),
     ".yaml": (
-        "# File:    {file}\n"
-        "# Rol:     {rol}\n"
-        "# Applicatie: {applicatie}\n"
-        "# Versie:  {versie}\n"
-        "# Auteur:  {auteur}\n"
-        "# Changes: {versie} - Baseline (header automatisch toegevoegd).\n\n"
+        "# Beschrijving: {rol}\n"
+        "# Versie: {versie}\n"
+        "# Auteur: {auteur}\n"
+        "# Applicatie: {applicatie}\n\n"
     ),
     ".yml": (
-        "# File:    {file}\n"
-        "# Rol:     {rol}\n"
-        "# Applicatie: {applicatie}\n"
-        "# Versie:  {versie}\n"
-        "# Auteur:  {auteur}\n"
-        "# Changes: {versie} - Baseline (header automatisch toegevoegd).\n\n"
+        "# Beschrijving: {rol}\n"
+        "# Versie: {versie}\n"
+        "# Auteur: {auteur}\n"
+        "# Applicatie: {applicatie}\n\n"
     ),
 }
 
@@ -125,15 +173,18 @@ def get_template_for_extension(extension: str) -> Optional[str]:
 # ============================================================
 # LABEL-ALIASSEN — meerdere headervocabularia naar één interne sleutel
 # ============================================================
-# Volgorde binnen elke lijst bepaalt voorrang bij een eventueel dubbele
-# match (komt in de praktijk niet voor, want elke header gebruikt één
-# vocabularium consistent).
+# BEWUST breed gehouden (niet beperkt tot de nieuwe CGK-stijl): dit is de
+# LEESKANT, gebruikt bij "Projectstructuur genereren" op zowel nieuwe als
+# bestaande/legacy projecten. Volgorde binnen elke lijst bepaalt voorrang
+# bij een eventueel dubbele match (komt in de praktijk niet voor, want
+# elke header gebruikt één vocabularium consistent).
 _LABEL_ALIASES: Dict[str, list] = {
-    "bestandsnaam": ["bestandsnaam", "file"],
-    "beschrijving": ["beschrijving", "rol", "role"],
+    "bestandsnaam": ["bestandsnaam", "file", "module"],
+    "beschrijving": ["beschrijving", "rol", "role", "doel"],
     "auteur": ["auteur", "author"],
-    "applicatie": ["applicatie", "application"],
+    "applicatie": ["applicatie", "application", "project"],
     "versie": ["versie", "version"],
+    "datum": ["datum", "date"],
 }
 
 _ALL_ALIAS_LABELS = {
@@ -173,6 +224,7 @@ def _extract_raw_metadata(text: str) -> dict:
         "auteur": None,
         "applicatie": None,
         "versie": None,
+        "datum": None,
     }
 
     label_to_key = {
@@ -208,10 +260,18 @@ def extract_metadata_from_text(text: str) -> dict:
     fallback-waarde wil toepassen vóór de generieke defaults (zoals
     core/add_headers.py doet voor "applicatie").
 
-    Herkent zowel project-doc-tool's eigen headerformaat
-    ("Bestandsnaam:"/"Beschrijving:"/...) als Project Generator's
-    header_renderer.py-formaat ("File:"/"Rol:"/...). Bestanden worden
-    nooit gewijzigd — dit is uitsluitend lezen.
+    Herkent inmiddels meerdere headervocabularia: project-doc-tool's eigen
+    formaat ("Bestandsnaam:"/"Beschrijving:"/...), de CGK-conforme
+    schrijfstijl ("File:"/"Role:"/"Version:"/"Author:"/"Applicatie:"),
+    Project Generator's vorige header_renderer.py-formaat ("File:"/"Rol:"/
+    ...), en het "Module:"/"Project:"/"Doel:"/"Datum:"-vocabularium dat in
+    bestaande projecten zoals capacitor_esr_validator voorkomt. Bestanden
+    worden nooit gewijzigd — dit is uitsluitend lezen.
+
+    "datum" krijgt BEWUST geen DEFAULT_*-waarde (blijft None/afwezig als
+    niet gevonden) — in tegenstelling tot de andere vier velden is dit geen
+    verplicht onderdeel van elk headerformaat, dus een "GEEN DATUM"-fallback
+    zou ruis toevoegen aan elk bestand dat dit veld nooit had.
     """
     metadata = _extract_raw_metadata(text)
 
@@ -219,6 +279,7 @@ def extract_metadata_from_text(text: str) -> dict:
     metadata["auteur"] = metadata["auteur"] or DEFAULT_AUTEUR
     metadata["applicatie"] = metadata["applicatie"] or DEFAULT_APPLICATIE
     metadata["versie"] = metadata["versie"] or DEFAULT_VERSIE
+    # metadata["datum"] blijft ongewijzigd: None indien niet aanwezig.
 
     return metadata
 

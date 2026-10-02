@@ -2,6 +2,49 @@
 
 Alle wijzigingen aan de Project Generator worden hier gedocumenteerd.
 
+## [2.1.0] - 2026-10-02
+
+### Toegevoegd
+- Nieuw, optioneel `Datum:`-headerveld — wordt getoond in gegenereerde
+  `PROJECT_STRUCTURE.md`-bestanden wanneer het aanwezig is (geen
+  geforceerde placeholder voor bestanden zonder dit veld) — ging voorheen
+  stilzwijgend verloren bij het uitlezen.
+
+### Gewijzigd
+- **Headerformaat gelijkgetrokken met de officiële CGK-conventie**
+  (`00-conventions.md` §4) — sluit het eerder geïdentificeerde open punt af:
+  - `.py`-headers worden niet langer als python-docstring geschreven, maar
+    als een `#`-commentaarblok met `====`-scheidingslijnen, met de Engelse
+    labels `File:`/`Role:`/`Version:`/`Author:`/`Changes:` (voorheen
+    `Rol:`/`Versie:`/`Auteur:`). `.bat`/`.ps1`/`.spec`-headers volgen
+    dezelfde Engelse labelfamilie, in `REM`/`#`-commentaarsyntax.
+  - `.txt`/`.ini`/`.yaml`/`.yml`-headers volgen nu het eigen
+    config-bestand-format uit de conventie (Nederlandse labels
+    `Beschrijving:`/`Versie:`/`Auteur:`/`Applicatie:`, geen aparte
+    bestandsnaam-regel meer).
+  - Bewuste, bevestigde afwijking t.o.v. de letterlijke conventie: een
+    expliciet `Applicatie:`-label blijft behouden (ook bij `.py`, waar de
+    conventie de appnaam ongelabeld plaatst) zodat `generate_index.py` dit
+    per bestand blijft kunnen uitlezen.
+  - Een nieuwe "Headers toevoegen"-run op een bestaand project converteert
+    oude docstring-stijl `.py`-headers automatisch naar de nieuwe
+    commentaarblok-stijl.
+- Het **uitlezen** van headers (gebruikt door "Projectstructuur
+  genereren" op bestaande/legacy projecten) blijft bewust breed en niet
+  beperkt tot het nieuwe formaat: de herkende label-aliassen zijn
+  uitgebreid met een vocabularium dat op een echt bestaand project
+  aangetroffen werd (`Module:`/`Project:`/`Doel:`, naast de reeds herkende
+  labels), zodat oudere/anders-geformuleerde headers correct uitgelezen
+  blijven i.p.v. als "geen beschrijving"/"geen applicatie" te verschijnen.
+
+### Opgelost
+- `.json`-bestanden krijgen niet langer een placeholder-metadatablok
+  (`GEEN BESCHRIJVING`/`GEEN AUTEUR`/`GEEN APPLICATIE`/`V1.0.0`) in
+  `PROJECT_STRUCTURE.md` — JSON kan structureel nooit een header krijgen
+  (geen commentaarsyntax), dus dit was pure ruis. Het bestand zelf blijft
+  gewoon zichtbaar in de boomstructuur, enkel het metadatablok vervalt.
+
+
 ## [2.0.5] - 2026-09-18
 
 ### Toegevoegd

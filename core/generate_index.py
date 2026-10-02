@@ -4,8 +4,25 @@ Rol:     Genereert PROJECT_STRUCTURE.md — een markdown-boomoverzicht van een
          projectmap, met per ondersteund bestand de uitgelezen headermetadata
          als fenced code-block. Bestanden worden nooit gewijzigd (read-only).
 Applicatie: Project Generator
-Versie:  2.4.0
+Versie:  2.6.0
 Auteur:  Barremans
+Changes: 2.6.0 - is_supported_file() sluit ".json" nu expliciet uit van
+                  metadata-weergave. JSON kan structureel nooit een header
+                  krijgen (geen commentaarsyntax — EXTENSION_TEMPLATES bevat
+                  bewust geen ".json"-template, zie extension_registry.py),
+                  dus elk .json-bestand kreeg een zinloos "GEEN
+                  BESCHRIJVING"/"GEEN AUTEUR"/"GEEN APPLICATIE"/"V1.0.0"
+                  -blokje in PROJECT_STRUCTURE.md (bevestigd via een
+                  gegenereerd voorbeeldproject, i18n/locales/*.json e.a.).
+                  .json blijft wel gewoon zichtbaar in de boomstructuur zelf
+                  (enkel het metadata-blok vervalt) — consistent met hoe
+                  .gitignore/.md/iconen al zonder blok verschijnen.
+Changes: 2.5.0 - append_metadata() toont nu ook "Datum:" wanneer dat veld
+                  aanwezig is (nieuw, optioneel metadataveld in
+                  core/extension_registry.py v2.5.0 — zie Changes daar voor
+                  de aanleiding: capacitor_esr_validator-project gebruikt
+                  "Datum:" naast "Module:"/"Project:"/"Doel:", wat voorheen
+                  stilzwijgend verloren ging bij het uitlezen).
 Changes: 2.4.0 - Geport vanuit project-doc-tool (generate_index_v2.py
                   v2.3.0, auteur Barre) in het kader van de samenvoeging
                   (zie context_ProjectDocTool.md §7.4). De afhankelijkheid
@@ -94,7 +111,15 @@ def generate_project_structure(
             return False
 
     def is_supported_file(path: Path) -> bool:
-        return path.suffix.lower() in EXTENSION_REGISTRY
+        # .json bewust uitgesloten van metadata-weergave: kan structureel
+        # nooit een header krijgen (geen commentaarsyntax, zie
+        # extension_registry.py EXTENSION_TEMPLATES) — een "GEEN ..."-blok
+        # voor elk .json-bestand is pure ruis in de index. Het bestand zelf
+        # blijft wel zichtbaar in de boomstructuur, enkel het blok vervalt.
+        suffix = path.suffix.lower()
+        if suffix == ".json":
+            return False
+        return suffix in EXTENSION_REGISTRY
 
     def append_metadata(file_path: Path, indent: int) -> None:
         """Leest en voegt metadata toe voor ondersteunde bestanden (read-only)."""
@@ -127,6 +152,8 @@ def generate_project_structure(
             lines.append(f"{prefix}# Applicatie: {metadata['applicatie']}")
         if metadata.get("versie"):
             lines.append(f"{prefix}# Versie: {metadata['versie']}")
+        if metadata.get("datum"):
+            lines.append(f"{prefix}# Datum: {metadata['datum']}")
 
         lines.append(f"{prefix}```")
 

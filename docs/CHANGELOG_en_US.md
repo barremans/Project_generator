@@ -2,6 +2,47 @@
 
 All changes to the Project Generator are documented here.
 
+## [2.1.0] - 2026-10-02
+
+### Added
+- New optional `Datum:`/`Date:` header field, shown in generated
+  `PROJECT_STRUCTURE.md` files whenever present (no forced placeholder on
+  files that don't have it) — previously silently dropped during reading.
+
+### Changed
+- **Header format brought into line with the official CGK convention**
+  (`00-conventions.md` §4), closing the previously-known deviation:
+  - `.py` headers are no longer written as a Python docstring, but as a
+    `#`-comment block with `====` separator lines, using the English
+    labels `File:`/`Role:`/`Version:`/`Author:`/`Changes:` (previously
+    `Rol:`/`Versie:`/`Auteur:`). `.bat`/`.ps1`/`.spec` headers follow the
+    same English label family, in `REM`/`#` comment syntax.
+  - `.txt`/`.ini`/`.yaml`/`.yml` headers now follow the convention's own
+    config-file format (Dutch labels `Beschrijving:`/`Versie:`/`Auteur:`/
+    `Applicatie:`, no separate filename line).
+  - Deliberate, confirmed deviation from the literal convention: an
+    explicit `Applicatie:` label is kept (even for `.py`, where the
+    convention places the app name unlabeled) so `generate_index.py` can
+    keep reading it per file.
+  - Re-running "Add headers" on an existing project automatically
+    converts old docstring-style `.py` headers to the new comment-block
+    style.
+- Header **reading** (used by "Generate project structure" on existing/
+  legacy projects) stays deliberately broad and unrestricted to the new
+  format: the recognised label aliases were extended with a vocabulary
+  found on a real existing project (`Module:`/`Project:`/`Doel:` in
+  addition to the already-recognised labels), so older/differently-worded
+  headers keep being read correctly instead of showing up as "no
+  description"/"no application".
+
+### Fixed
+- `.json` files no longer get a placeholder metadata block (`GEEN
+  BESCHRIJVING`/`GEEN AUTEUR`/`GEEN APPLICATIE`/`V1.0.0`) in
+  `PROJECT_STRUCTURE.md` — JSON can structurally never have a header (no
+  comment syntax), so this was pure noise. The file itself still shows up
+  in the tree, just without the metadata block.
+
+
 ## [2.0.5] - 2026-09-18
 
 ### Added
