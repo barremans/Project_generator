@@ -2,6 +2,90 @@
 
 All changes to the Project Generator are documented here.
 
+## [2.0.5] - 2026-09-18
+
+### Added
+- 
+
+### Changed
+- 
+
+### Fixed
+- 
+
+
+## [2.0.4] - 2026-09-18
+
+### Added
+- 
+
+### Changed
+- 
+
+### Fixed
+- 
+
+
+## [2.0.3] - 2026-09-17
+
+### Added
+- 
+
+### Changed
+- 
+
+### Fixed
+- 
+
+
+## [2.0.2] - 2026-09-17
+
+### Added
+- 
+
+### Changed
+- 
+
+### Fixed
+- 
+
+
+## [2.0.1] - 2026-09-16
+
+### Added
+- 
+
+### Changed
+- 
+
+### Fixed
+- 
+
+
+## [2.0.0] - 2026-09-16
+
+### Added
+- 
+
+### Changed
+- 
+
+### Fixed
+- 
+
+
+## [1.1.1] - 2026-09-16
+
+### Added
+- 
+
+### Changed
+- 
+
+### Fixed
+- 
+
+
 ## [1.2.0] - 2026-09-16
 
 ### Added

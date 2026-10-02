@@ -1,6 +1,6 @@
 [project]
 name = "Project-generator"
-version = "1.0.11"
+version = "2.0.5"
 description = "Python Project Generator"
 authors = [
     { name = "Barremans" },

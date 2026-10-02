@@ -678,3 +678,86 @@ flake8 .
 **Versie:** 1.2.0  
 **Laatste update:** 2026-09-16  
 **Auteur:** Barremans
+---
+
+## Certificaten & Signing
+
+Project Generator bevat een centrale tool voor het beheren van interne Windows code-signingcertificaten en voor het controleren en signen van gebouwde applicaties. Open deze via **Tools → Certificaten & Signing**.
+
+### Certificaten
+
+De tab **Certificaten** toont de code-signingcertificaten van de huidige Windows-gebruiker. Voor de productie-workflow wordt `CN=CGK Local Signing` gebruikt in `Cert:\CurrentUser\My`.
+
+De tabel toont onder andere de thumbprint, vervaldatum, resterende dagen, aanwezigheid van de private key en de Windows trust-status. **Root: Ja** betekent dat de publieke certificaatkopie aanwezig is in `CurrentUser\Root`. **Publisher: Ja** betekent dat deze aanwezig is in `CurrentUser\TrustedPublisher`. **Actief: Ja** geeft aan welk certificaat door de signingtool wordt gebruikt.
+
+Gebruik **Als actief instellen** om expliciet het signingcertificaat te kiezen. Een verlopen certificaat of een certificaat zonder private key kan niet als bruikbaar productiecertificaat worden gebruikt.
+
+### Nieuw signingcertificaat
+
+Gebruik **Nieuw certificaat...** wanneer het huidige certificaat moet worden vervangen. Maak het productiecertificaat aan als de normale buildgebruiker, niet vanuit een LAPS/`pcadmin`-sessie.
+
+Standaardinstellingen:
+
+```text
+Common name:       CGK Local Signing
+Geldigheid:        2 jaar
+Certificate store: Cert:\CurrentUser\My
+```
+
+Er wordt een **nieuw self-signed Code Signing-certificaat** gemaakt. Het bestaande certificaat wordt niet gewijzigd of verwijderd en het nieuwe certificaat krijgt een nieuwe thumbprint.
+
+Na het aanmaken bewaart Project Generator de private key in `CurrentUser\My`, plaatst het automatisch een publieke certificaatkopie in `CurrentUser\Root` en `CurrentUser\TrustedPublisher`, controleert beide trust stores en stelt het nieuwe certificaat pas daarna als actief in.
+
+### Exporteren en Microsoft Defender
+
+Selecteer het actieve certificaat en kies **Export .cer...**. Alleen het publieke certificaat wordt geëxporteerd; de private key wordt niet geëxporteerd.
+
+De standaardlocatie kan bijvoorbeeld zijn:
+
+```text
+C:\PY\Tools\signing-certs\
+```
+
+Gebruik daarna **Open Microsoft Defender** en voeg de nieuwe `.cer` toe als Certificate Indicator. Controleer dat de thumbprint in Defender exact overeenkomt met de thumbprint in Project Generator. Gebruik voor de interne allow-indicator de door de organisatie afgesproken instellingen, waaronder **Allow** en de geldigheidsinstelling voor de indicator.
+
+Een bestaande Defender-indicator voor een ouder signingcertificaat hoeft niet automatisch verwijderd te worden. Oudere builds kunnen nog met dat oudere certificaat gesigned zijn.
+
+### Applicaties controleren
+
+De tab **Applicaties controleren** scant distributiebestanden. Wanneer bijvoorbeeld `C:\PY` geselecteerd is, zoekt de tool projectmappen met een `dist`-map en controleert alleen `.exe`-bestanden direct in die `dist`-mappen.
+
+Hierdoor worden virtuele omgevingen, `site-packages`, PyInstaller `_internal`-dependencies, DLL's en ontwikkelscripts niet in het normale signingoverzicht opgenomen.
+
+Voorbeelden:
+
+```text
+C:\PY\MyApp\dist\MyApp.exe
+C:\PY\MyApp\dist\MyAppSetup_1.2.3.exe
+```
+
+Een setupbestand mag dus een versie als postfix in de bestandsnaam hebben.
+
+### Applicaties signen
+
+Een bestand met status **NotSigned** kan geselecteerd worden en via **Geselecteerde signen** worden gesigned. **Alle unsigned signen** verwerkt alle gevonden bestanden met status `NotSigned`.
+
+Vóór signing toont Project Generator het actieve certificaat, de volledige thumbprint en de bestanden die zullen worden gesigned. Controleer deze gegevens voordat je bevestigt.
+
+De signingtool gebruikt SHA-256, voegt een RFC3161-timestamp toe en voert na signing automatisch `signtool verify /pa /v` uit. Alleen een geslaagde signing én verificatie wordt als succesvol beschouwd. Daarna wordt de applicatielijst opnieuw gescand.
+
+Een bestand met **UnknownError** wordt bewust niet automatisch gesigned. Onderzoek eerst de oorzaak van die status.
+
+### Aanbevolen workflow bij certificaatvernieuwing
+
+1. Start Project Generator als de normale buildgebruiker.
+2. Open **Tools → Certificaten & Signing → Certificaten**.
+3. Maak een nieuw `CGK Local Signing`-certificaat aan.
+4. Controleer **Private key: Ja**, **Root: Ja**, **Publisher: Ja** en **Actief: Ja**.
+5. Exporteer de nieuwe `.cer`.
+6. Voeg de `.cer` toe aan Microsoft Defender en controleer de thumbprint.
+7. Open **Applicaties controleren**.
+8. Test eerst één unsigned distributiebestand met **Geselecteerde signen**.
+9. Controleer dat de status na signing **Valid** is en de nieuwe thumbprint toont.
+10. Sign daarna de overige nieuwe distributiebestanden.
+
+Bestaande, reeds geldige builds hoeven niet opnieuw gesigned te worden alleen omdat een nieuw signingcertificaat is aangemaakt.

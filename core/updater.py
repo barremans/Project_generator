@@ -4,8 +4,15 @@ Rol:     Update-check tegen GitHub — leest version.txt (releases/latest/)
          voor de versievergelijking, en de release notes van de laatste
          GitHub Release via de Releases API voor "Wat is er nieuw?".
 Applicatie: Project Generator
-Versie:  1.0.1
+Versie:  1.0.2
 Auteur:  Barremans
+Changes: 1.0.2 - Cache-busting toegevoegd aan de raw version.txt-fetch:
+                  raw.githubusercontent.com kan een net gepubliceerde
+                  versie enkele minuten blijven cachen (bevestigd:
+                  "Published v2.0.0" gevolgd door een check die nog
+                  "Remote versie: 1.1.1" teruggaf). Een unieke query-param
+                  + Cache-Control: no-cache forceert een verse fetch i.p.v.
+                  de (mogelijk stale) gecachede versie.
 Changes: 1.0.1 - Repo bevestigd: barremans/Project_generator
                   (https://github.com/barremans/Project_generator) —
                   eerdere aanname "project-generator" was verkeerd
@@ -103,9 +110,20 @@ def fetch_release_notes(timeout=8) -> dict:
     }
 
 def _fetch_version_txt(timeout=8) -> str:
-    # 1) Raw (werkt voor public)
+    # 1) Raw (werkt voor public). Cache-busting query param + no-cache
+    # header: raw.githubusercontent.com zit achter een CDN dat een net
+    # gepubliceerde versie soms enkele minuten blijft cachen (bevestigd:
+    # direct na "Published v2.0.0" gaf deze URL nog "1.1.1" terug). Een
+    # unieke query-param forceert een aparte cache-entry i.p.v. de
+    # bestaande (mogelijk stale) te hergebruiken.
+    import time
+    cache_buster = f"?_={int(time.time())}"
     try:
-        r = requests.get(RAW_VERSION_URL, headers=_headers_raw(), timeout=timeout)
+        r = requests.get(
+            RAW_VERSION_URL + cache_buster,
+            headers={**_headers_raw(), "Cache-Control": "no-cache"},
+            timeout=timeout,
+        )
         if r.ok:
             return r.text
         print(f"[update-check] raw GET {RAW_VERSION_URL} -> {r.status_code}")

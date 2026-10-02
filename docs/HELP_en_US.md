@@ -348,3 +348,86 @@ Download the latest version and overwrite the files. Your settings will be prese
 **License:** MIT
 
 For questions or issues, consult the changelog or contact the developer.
+---
+
+## Certificates & Signing
+
+Project Generator includes a central tool for managing internal Windows code-signing certificates and for checking and signing built applications. Open it through **Tools → Certificates & Signing**.
+
+### Certificates
+
+The **Certificates** tab shows code-signing certificates for the current Windows user. The production workflow uses `CN=CGK Local Signing` in `Cert:\CurrentUser\My`.
+
+The table includes the thumbprint, expiration date, remaining days, private-key availability and Windows trust status. **Root: Yes** means the public certificate copy is present in `CurrentUser\Root`. **Publisher: Yes** means it is present in `CurrentUser\TrustedPublisher`. **Active: Yes** identifies the certificate used by the signing tool.
+
+Use **Set as active** to explicitly choose the signing certificate. An expired certificate or a certificate without its private key cannot be used as a valid production signing certificate.
+
+### New signing certificate
+
+Use **New certificate...** when the current certificate needs to be replaced. Create the production certificate while running as the normal build user, not from a LAPS/`pcadmin` session.
+
+Default settings:
+
+```text
+Common name:       CGK Local Signing
+Validity:          2 years
+Certificate store: Cert:\CurrentUser\My
+```
+
+A **new self-signed Code Signing certificate** is created. The existing certificate is not changed or deleted, and the new certificate receives a new thumbprint.
+
+After creation, Project Generator keeps the private key in `CurrentUser\My`, automatically adds a public certificate copy to `CurrentUser\Root` and `CurrentUser\TrustedPublisher`, verifies both trust stores, and only then marks the new certificate as active.
+
+### Export and Microsoft Defender
+
+Select the active certificate and choose **Export .cer...**. Only the public certificate is exported; the private key is never exported.
+
+A typical location is:
+
+```text
+C:\PY\Tools\signing-certs\
+```
+
+Then use **Open Microsoft Defender** and add the new `.cer` as a Certificate Indicator. Verify that the thumbprint shown by Defender exactly matches the thumbprint in Project Generator. Use the organization's agreed settings for the internal allow indicator, including **Allow** and the configured indicator expiration.
+
+An existing Defender indicator for an older signing certificate does not need to be removed automatically. Older builds may still be signed with that certificate.
+
+### Check applications
+
+The **Check applications** tab scans distributable files. When `C:\PY` is selected, the tool discovers project `dist` directories and checks only `.exe` files directly inside those directories.
+
+This keeps virtual environments, `site-packages`, PyInstaller `_internal` dependencies, DLLs and development scripts out of the normal signing overview.
+
+Examples:
+
+```text
+C:\PY\MyApp\dist\MyApp.exe
+C:\PY\MyApp\dist\MyAppSetup_1.2.3.exe
+```
+
+Setup executables may therefore contain a version suffix in their filename.
+
+### Sign applications
+
+A file with status **NotSigned** can be selected and signed using **Sign selected**. **Sign all unsigned** processes all discovered files whose status is `NotSigned`.
+
+Before signing, Project Generator displays the active certificate, full thumbprint and files that will be signed. Verify these details before confirming.
+
+The signing tool uses SHA-256, adds an RFC3161 timestamp and automatically runs `signtool verify /pa /v` after signing. Signing is considered successful only when both signing and verification succeed. The application list is then scanned again.
+
+A file with **UnknownError** is deliberately not signed automatically. Investigate the cause of that status first.
+
+### Recommended certificate-renewal workflow
+
+1. Start Project Generator as the normal build user.
+2. Open **Tools → Certificates & Signing → Certificates**.
+3. Create a new `CGK Local Signing` certificate.
+4. Confirm **Private key: Yes**, **Root: Yes**, **Publisher: Yes** and **Active: Yes**.
+5. Export the new `.cer`.
+6. Add the `.cer` to Microsoft Defender and verify its thumbprint.
+7. Open **Check applications**.
+8. Test one unsigned distribution file first with **Sign selected**.
+9. Confirm that its status becomes **Valid** and shows the new thumbprint.
+10. Sign the remaining new distribution files.
+
+Existing valid builds do not need to be re-signed solely because a new signing certificate has been created.

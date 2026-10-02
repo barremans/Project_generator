@@ -110,7 +110,6 @@ from core.generator import ProjectGenerator
 from utils.settings import AppSettings
 from gui.settings_dialog import SettingsDialog
 from gui.tools_dialog import ToolsDialog
-from gui.certificate_dialog import CertificateDialog
 from gui.bug_report_dialog import BugDialog
 from core.updater import check_for_update, download_latest_release, fetch_release_notes
 from app.version import __version__
@@ -261,10 +260,6 @@ class ProjectGeneratorWindow(QMainWindow):
         headers_structure_action = QAction(t("menu.tools.headers_structuur"), self)
         headers_structure_action.triggered.connect(self._open_tools_dialog)
         tools_menu.addAction(headers_structure_action)
-
-        certificate_action = QAction(t("menu.tools.certificates"), self)
-        certificate_action.triggered.connect(self._open_certificate_dialog)
-        tools_menu.addAction(certificate_action)
         
         # Rapporteren menu
         report_menu = menubar.addMenu(t("menu.rapporteren"))
@@ -343,10 +338,6 @@ class ProjectGeneratorWindow(QMainWindow):
         headers_structure_action = QAction(t("menu.tools.headers_structuur"), self)
         headers_structure_action.triggered.connect(self._open_tools_dialog)
         tools_menu.addAction(headers_structure_action)
-
-        certificate_action = QAction(t("menu.tools.certificates"), self)
-        certificate_action.triggered.connect(self._open_certificate_dialog)
-        tools_menu.addAction(certificate_action)
         
         # Rapporteren menu
         report_menu = self.menuBar().addMenu(t("menu.rapporteren"))
@@ -1012,14 +1003,6 @@ class ProjectGeneratorWindow(QMainWindow):
             Path(self.generated_project_path) if self.generated_project_path else None
         )
         dialog = ToolsDialog(self, initial_path=initial_path)
-        dialog.exec()
-
-    def _open_certificate_dialog(self):
-        """Open de centrale Certificate & Signing tool."""
-        initial_path = (
-            Path(self.generated_project_path) if self.generated_project_path else Path(r"C:\PY")
-        )
-        dialog = CertificateDialog(self, initial_path=initial_path)
         dialog.exec()
 
     def _open_bug_report_dialog(self):

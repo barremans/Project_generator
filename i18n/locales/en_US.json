@@ -1,7 +1,6 @@
 {
-    "app.title": "Python Project Generator v1.0.5",
+    "app.title": "Python Project Generator {version}",
     "app.subtitle": "Automatically generate a complete Python project structure",
-    
     "wizard.step1.title": "Step 1: Project Location",
     "wizard.step1.location": "Where do you want to create the project?",
     "wizard.step1.browse": "Browse...",
@@ -9,19 +8,16 @@
     "wizard.step1.placeholder": "Select a folder...",
     "wizard.step1.appname_placeholder": "e.g.: MyAwesomeApp",
     "wizard.step1.info": "💡 The application name will be used as folder name and in all files.",
-    
     "wizard.step2.title": "Step 2: Project Information",
     "wizard.step2.author": "Author:",
     "wizard.step2.version": "Version:",
     "wizard.step2.description": "Description:",
     "wizard.step2.author_placeholder": "Your name",
     "wizard.step2.description_placeholder": "Optional project description...",
-    
     "wizard.step3.title": "Step 3: Options",
     "wizard.step3.venv": "Create virtual environment (venv)",
     "wizard.step3.venv_info": "Automatically creates a venv and installs pip.",
     "wizard.step3.structure_title": "ℹ️  Standard project structure:",
-    
     "wizard.step4.title": "Step 4: Summary",
     "wizard.step4.check": "Review settings:",
     "wizard.step4.location": "Project location:",
@@ -40,14 +36,11 @@
     "wizard.step4.spec_file": "PyInstaller .spec file",
     "wizard.step4.vscode_config": "VS Code configuration",
     "wizard.step4.venv_env": "Virtual Python environment",
-    
     "wizard.step5.title": "Creating project...",
     "wizard.step5.generating": "Generating...",
-    
     "wizard.step6.title": "✅ Project created successfully!",
     "wizard.step6.location": "Location:",
     "wizard.step6.info": "Use the buttons below to open the project or start a new one.",
-    
     "button.previous": "← Previous",
     "button.next": "Next →",
     "button.generate": "🚀 Generate Project",
@@ -55,26 +48,21 @@
     "button.open_editor": "💻 Open in Editor",
     "button.new_project": "🆕 New Project",
     "button.close": "❌ Close",
-    
     "menu.file": "File",
     "menu.file.new": "New Project",
     "menu.file.settings": "Settings",
     "menu.file.exit": "Exit",
-    
     "menu.help": "Help",
     "menu.help.help": "Help",
     "menu.help.changelog": "Changelog",
     "menu.help.about": "About",
     "menu.help.updates": "Check for updates...",
-    
+    "menu.help.whats_new": "What's new?...",
     "menu.language": "Language",
-    
     "menu.tools": "Tools",
     "menu.tools.headers_structuur": "Headers && Structure...",
-    
     "menu.rapporteren": "Report",
     "menu.rapporteren.bug_feature": "Report bug or feature...",
-    
     "settings.title": "Settings",
     "settings.defaults": "Default Values",
     "settings.default_author": "Default Author:",
@@ -93,7 +81,6 @@
     "settings.saved_message": "Settings have been saved!",
     "settings.error": "Error",
     "settings.error_message": "Could not save settings.",
-    
     "about.title": "About Project Generator",
     "about.version": "Version:",
     "about.author": "Author:",
@@ -102,7 +89,7 @@
     "about.features": "Features:",
     "about.developed_with": "Developed with:",
     "about.copyright": "© 2026 Barremans - All rights reserved",
-    
     "error.editor_not_found": "Editor not found",
-    "error.editor_not_found_message": "Editor '{editor}' was not found.\n\nConfigure the correct path via Menu → File → Settings"
+    "error.editor_not_found_message": "Editor '{editor}' was not found.\n\nConfigure the correct path via Menu → File → Settings",
+    "menu.tools.certificates": "Certificates && Signing..."
 }

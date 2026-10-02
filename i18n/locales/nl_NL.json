@@ -1,7 +1,6 @@
 {
-    "app.title": "Python Project Generator v1.0.5",
+    "app.title": "Python Project Generator {version}",
     "app.subtitle": "Genereer automatisch een complete Python projectstructuur",
-    
     "wizard.step1.title": "Stap 1: Projectlocatie",
     "wizard.step1.location": "Waar wil je het project aanmaken?",
     "wizard.step1.browse": "Bladeren...",
@@ -9,19 +8,16 @@
     "wizard.step1.placeholder": "Selecteer een map...",
     "wizard.step1.appname_placeholder": "Bijv: MyAwesomeApp",
     "wizard.step1.info": "💡 De applicatienaam wordt gebruikt als mapnaam en in alle bestanden.",
-    
     "wizard.step2.title": "Stap 2: Project Informatie",
     "wizard.step2.author": "Auteur:",
     "wizard.step2.version": "Versie:",
     "wizard.step2.description": "Beschrijving:",
     "wizard.step2.author_placeholder": "Jouw naam",
     "wizard.step2.description_placeholder": "Optionele beschrijving van het project...",
-    
     "wizard.step3.title": "Stap 3: Opties",
     "wizard.step3.venv": "Virtuele omgeving (venv) aanmaken",
     "wizard.step3.venv_info": "Maakt automatisch een venv aan en installeert pip.",
     "wizard.step3.structure_title": "ℹ️  Standaard projectstructuur:",
-    
     "wizard.step4.title": "Stap 4: Samenvatting",
     "wizard.step4.check": "Controleer de instellingen:",
     "wizard.step4.location": "Projectlocatie:",
@@ -40,14 +36,11 @@
     "wizard.step4.spec_file": "PyInstaller .spec bestand",
     "wizard.step4.vscode_config": "VS Code configuratie",
     "wizard.step4.venv_env": "Virtuele Python omgeving",
-    
     "wizard.step5.title": "Project wordt aangemaakt...",
     "wizard.step5.generating": "Bezig met genereren...",
-    
     "wizard.step6.title": "✅ Project succesvol aangemaakt!",
     "wizard.step6.location": "Locatie:",
     "wizard.step6.info": "Gebruik de knoppen hieronder om het project te openen of een nieuw project te starten.",
-    
     "button.previous": "← Vorige",
     "button.next": "Volgende →",
     "button.generate": "🚀 Genereer Project",
@@ -55,26 +48,21 @@
     "button.open_editor": "💻 Open in Editor",
     "button.new_project": "🆕 Nieuw Project",
     "button.close": "❌ Sluiten",
-    
     "menu.file": "Bestand",
     "menu.file.new": "Nieuw Project",
     "menu.file.settings": "Instellingen",
     "menu.file.exit": "Afsluiten",
-    
     "menu.help": "Help",
     "menu.help.help": "Help",
     "menu.help.changelog": "Changelog",
     "menu.help.about": "Over",
     "menu.help.updates": "Controleer op updates...",
-    
+    "menu.help.whats_new": "Wat is er nieuw?...",
     "menu.language": "Taal",
-    
     "menu.tools": "Tools",
     "menu.tools.headers_structuur": "Headers && Structuur...",
-    
     "menu.rapporteren": "Rapporteren",
     "menu.rapporteren.bug_feature": "Bug of feature melden...",
-    
     "settings.title": "Instellingen",
     "settings.defaults": "Standaard Waarden",
     "settings.default_author": "Standaard Auteur:",
@@ -93,7 +81,6 @@
     "settings.saved_message": "Instellingen zijn opgeslagen!",
     "settings.error": "Fout",
     "settings.error_message": "Kon instellingen niet opslaan.",
-    
     "about.title": "Over Project Generator",
     "about.version": "Versie:",
     "about.author": "Auteur:",
@@ -102,7 +89,7 @@
     "about.features": "Kenmerken:",
     "about.developed_with": "Ontwikkeld met:",
     "about.copyright": "© 2026 Barremans - Alle rechten voorbehouden",
-    
     "error.editor_not_found": "Editor niet gevonden",
-    "error.editor_not_found_message": "Editor '{editor}' is niet gevonden.\n\nConfigureer het juiste pad via Menu → Bestand → Instellingen"
+    "error.editor_not_found_message": "Editor '{editor}' is niet gevonden.\n\nConfigureer het juiste pad via Menu → Bestand → Instellingen",
+    "menu.tools.certificates": "Certificaten && Signing..."
 }
